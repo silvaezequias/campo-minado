@@ -68,7 +68,7 @@ export const Button = ({
     smr: "size-3",
     sm: "size-5",
     md: "size-4",
-    lg: "size-8",
+    lg: "size-6",
     xl: "size-15",
   }[size];
 

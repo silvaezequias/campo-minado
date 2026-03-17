@@ -20,7 +20,7 @@ export default function Minesweeper() {
         case "f":
           if (gameState === "playing") setIsFlagMode(true);
           break;
-        case "c":
+        case "d":
           if (gameState === "playing") setIsFlagMode(false);
           break;
         case "m":
@@ -48,7 +48,7 @@ export default function Minesweeper() {
 
   return (
     <div className="w-full h-screen flex justify-center md:items-center">
-      <div className="w-full md:w-[60%] lg:w-[50%] xl:w-[30%] py-10 px-5 flex flex-col gap-5">
+      <div className="w-full md:w-[60%] lg:w-[50%] xl:w-[30%] py-10 px-5 flex flex-col gap-2">
         <div className="flex flex-col gap-2">
           <Header
             totalBombs={game.config.mines}
@@ -71,22 +71,22 @@ export default function Minesweeper() {
               Recomeçar <span className="hidden md:inline-block">(r)</span>
             </Button>
           ) : gameState === "playing" ? (
-            <div className="flex gap-5">
+            <div className="flex gap-2">
               <Button
                 variant={isFlagMode ? "default" : "primary"}
                 className="w-full rounded-4xl"
-                size="md"
+                size="lg"
                 icon={Shovel}
                 clickable={isFlagMode}
                 onClick={() => setIsFlagMode(false)}
                 fillIcon={!isFlagMode ? "fill-zinc-950" : ""}
               >
-                <span className="hidden md:inline-block">(c)</span>
+                <span className="hidden md:inline-block">(d)</span>
               </Button>
               <Button
                 variant={isFlagMode ? "primary" : "default"}
                 className="w-full rounded-4x"
-                size="md"
+                size="lg"
                 icon={Flag}
                 clickable={!isFlagMode}
                 onClick={() => setIsFlagMode(true)}
