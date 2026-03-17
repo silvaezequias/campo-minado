@@ -48,11 +48,11 @@ export const Button = ({
   }[aspect];
 
   const sizeStyle = {
-    smr: "text-sm gap-2 font-bold tracking-wider rounded-lg",
-    sm: "text-lg gap-2 font-bold tracking-wider rounded-lg",
-    md: "text-xl gap-3 font-bold rounded-xl",
-    lg: "text-4xl gap-3 font-bold rounded-xl",
-    xl: "text-6xl gap-4 font-bold rounded-xl",
+    smr: "text-xs gap-2 font-bold tracking-wider rounded-lg",
+    sm: "text-sm gap-2 font-bold tracking-wider rounded-lg",
+    md: "text-sm gap-3 font-bold rounded-xl",
+    lg: "text-3xl gap-3 font-bold rounded-xl",
+    xl: "text-5xl gap-4 font-bold rounded-xl",
   }[size];
 
   const paddingStyle = {
@@ -67,7 +67,7 @@ export const Button = ({
   const iconButtonSizeStyle = {
     smr: "size-3",
     sm: "size-5",
-    md: "size-5",
+    md: "size-4",
     lg: "size-8",
     xl: "size-15",
   }[size];
