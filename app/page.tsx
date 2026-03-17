@@ -47,7 +47,7 @@ export default function Minesweeper() {
   }, [handleKeyPress, reset]);
 
   return (
-    <div className="w-full h-screen flex justify-center items-center">
+    <div className="w-full h-screen flex justify-center md:items-center">
       <div className="w-full md:w-[60%] lg:w-[50%] xl:w-[30%] py-10 px-5 flex flex-col gap-5">
         <div className="flex flex-col gap-2">
           <Header
