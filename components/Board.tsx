@@ -27,8 +27,15 @@ export const Board = ({ game }: BoardProps) => {
               cell={cell}
               size={cellSize}
               key={`x${cell.x}y${cell.y}`}
-              onClick={() => game.revealCell(cell.y, cell.x)}
-              onContextMenu={() => game.toggleFlag(cell.y, cell.x)}
+              onClick={() =>
+                game.handleCellClick({
+                  row: cell.y,
+                  col: cell.x,
+                })
+              }
+              onContextMenu={() =>
+                game.handleCellClick({ row: cell.y, col: cell.x }, true)
+              }
             />
           );
         });
@@ -63,6 +70,8 @@ const BoardCell = ({ cell, size, onClick, onContextMenu }: BoardCellProps) => {
       ? "fill-red-500 text-red-500"
       : "";
 
+  const animation = cell.isMine && cell.isRevealed && "animate-pulse";
+
   return (
     <Button
       size={size}
@@ -71,9 +80,9 @@ const BoardCell = ({ cell, size, onClick, onContextMenu }: BoardCellProps) => {
         cell.isFlagged
           ? "danger"
           : cell.isRevealed
-            ? cell.neighborMines > 0
-              ? "primary"
-              : "secondary"
+            ? cell.neighborMines < 1 && !cell.isMine
+              ? "secondary"
+              : "primary"
             : "default"
       }
       clickable={!cell.isRevealed && !cell.isFlagged}
@@ -81,7 +90,7 @@ const BoardCell = ({ cell, size, onClick, onContextMenu }: BoardCellProps) => {
       onClick={onClick}
       onContextMenu={onContextMenu}
       fillIcon={fillIconColor}
-      className={fillIconColor}
+      className={`${fillIconColor} ${animation}`}
     >
       {content || ""}
     </Button>
