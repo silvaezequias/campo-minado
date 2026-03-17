@@ -80,6 +80,7 @@ export function useGameEngine(
     setGameState("start");
     setBoard(generateBoard({ settings, enableBombs: false }));
     setMinesLeft(settings.mines);
+    setTime(0);
   };
 
   const handleCellClick = useCallback(
