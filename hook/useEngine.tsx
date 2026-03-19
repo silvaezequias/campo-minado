@@ -10,9 +10,10 @@ export type Cell = {
   isRevealed: boolean;
   isFlagged: boolean;
   neighborMines: number;
+  isTriggered?: boolean;
 };
 
-type GameState = "start" | "playing" | "won" | "lost";
+export type GameState = "start" | "playing" | "won" | "lost";
 type Settings = (typeof DIFFICULTIES)[keyof typeof DIFFICULTIES];
 
 type Board = Cell[][];
@@ -53,6 +54,7 @@ export function useGameEngine(
   );
 
   const [gameState, setGameState] = useState<GameState>("start");
+  const [previewCells, setPreviewCells] = useState<Set<string>>(new Set());
 
   const [minesLeft, setMinesLeft] = useState(config.mines);
   const [time, setTime] = useState(0);
@@ -83,8 +85,24 @@ export function useGameEngine(
     setTime(0);
   };
 
+  function handleMouseDown(cell: Cell) {
+    if (gameState !== "playing") return;
+    if (!cell.isRevealed || cell.neighborMines === 0) return;
+
+    const coord = { col: cell.x, row: cell.y };
+    const neighbors = getAroundCell({ coord, board });
+    const hidden = neighbors.filter((c) => !c.isRevealed && !c.isFlagged);
+    const newPreview = new Set(hidden.map((c) => `${c.y}-${c.x}`));
+
+    setPreviewCells(newPreview);
+  }
+
+  function clearPreview() {
+    setPreviewCells(new Set());
+  }
   const handleCellClick = useCallback(
-    (coord: Coords, forceFlagMode: boolean = false) => {
+    (cell: Cell, forceFlagMode: boolean = false) => {
+      const coord = { col: cell.x, row: cell.y };
       if (forceFlagMode || isFlagMode) {
         toggleFlag({
           board,
@@ -129,6 +147,7 @@ export function useGameEngine(
     coins,
     isFlagMode,
     cellSize,
+    previewCells,
 
     setCellSize,
     setConfig,
@@ -142,6 +161,8 @@ export function useGameEngine(
     generateBoard,
     handleChangeDifficulty,
     handleCellClick,
+    handleMouseDown,
+    clearPreview,
   };
 }
 
@@ -157,6 +178,66 @@ type ToggleFlagProps = {
   setBoard: Dispatch<SetStateAction<Board>>;
   setMinesLeft: Dispatch<SetStateAction<number>>;
 };
+
+type RevealCellsProps = {
+  coords: Coords[];
+  board: Board;
+  allowMultipleTriggered?: boolean;
+};
+
+function revealCells({
+  board,
+  coords,
+  allowMultipleTriggered = false,
+}: RevealCellsProps & { allowMultipleTriggered?: boolean }): Cell[][] {
+  const newBoard = structuredClone(board);
+
+  let triggered = false;
+
+  coords.forEach(({ row, col }) => {
+    const start = newBoard[row]?.[col];
+    if (!start || start.isRevealed || start.isFlagged) return;
+
+    const queue: [number, number][] = [[row, col]];
+
+    while (queue.length) {
+      const [r, c] = queue.shift()!;
+
+      const current = newBoard[r]?.[c];
+      if (!current || current.isRevealed || current.isFlagged) continue;
+
+      current.isRevealed = true;
+
+      if (current.isMine) {
+        if (allowMultipleTriggered) {
+          current.isTriggered = true;
+        } else if (!triggered) {
+          current.isTriggered = true;
+          triggered = true;
+        }
+
+        continue;
+      }
+
+      if (current.neighborMines === 0) {
+        for (let i = -1; i <= 1; i++) {
+          for (let j = -1; j <= 1; j++) {
+            if (i === 0 && j === 0) continue;
+
+            const nr = r + i;
+            const nc = c + j;
+
+            if (newBoard[nr]?.[nc] && !newBoard[nr][nc].isRevealed) {
+              queue.push([nr, nc]);
+            }
+          }
+        }
+      }
+    }
+  });
+
+  return newBoard;
+}
 
 type RevealCellProps = {
   coord: Coords;
@@ -194,57 +275,115 @@ function revealCell({
 
   const cell = board[coord.row][coord.col];
 
-  if (!cell || cell.isRevealed || cell.isFlagged) return;
+  if (!cell || cell.isFlagged) return;
 
-  const newBoard = board.map((row) => row.map((cell) => ({ ...cell })));
-  const start = newBoard[coord.row][coord.col];
+  if (cell.isRevealed && cell.neighborMines > 0) {
+    const neighbors = getAroundCell({ coord, board });
 
-  if (start.isMine) {
-    newBoard.forEach((row) =>
-      row.forEach((cell) => {
-        if (cell.isMine) cell.isRevealed = true;
-      }),
-    );
+    const flagged = neighbors.filter((c) => c.isFlagged);
+    const hidden = neighbors.filter((c) => !c.isRevealed && !c.isFlagged);
 
-    setBoard(newBoard);
-    setState("lost");
+    if (flagged.length >= cell.neighborMines) {
+      const coordsToReveal = hidden.map(
+        (neighbor): Coords => ({
+          col: neighbor.x,
+          row: neighbor.y,
+        }),
+      );
+
+      setBoard((prev) => {
+        const newBoard = revealCells({
+          board: prev,
+          coords: coordsToReveal,
+          allowMultipleTriggered: true,
+        });
+        updateGame({ board: newBoard, setBoard, setState });
+        return newBoard;
+      });
+    }
+
     return;
   }
 
-  const queue: [number, number][] = [[coord.row, coord.col]];
+  const newBoard = revealCells({ board, coords: [coord] });
 
-  while (queue.length) {
-    const [row, col] = queue.shift()!;
+  updateGame({
+    board: newBoard,
+    setBoard,
+    setState,
+  });
+}
 
-    const current = newBoard[row]?.[col];
-    if (!current || current.isRevealed || current.isFlagged) continue;
+function updateGame({
+  board,
+  setBoard,
+  setState,
+}: {
+  board: Cell[][];
+  setBoard: (b: Cell[][]) => void;
+  setState: (s: GameState) => void;
+}) {
+  const { won, lost } = evaluateGame(board);
 
-    current.isRevealed = true;
-
-    if (current.neighborMines === 0) {
-      for (let i = -1; i <= 1; i++) {
-        for (let j = -1; j <= 1; j++) {
-          if (i === 0 && j === 0) continue;
-
-          const nr = row + i;
-          const nc = col + j;
-
-          if (newBoard[nr]?.[nc] && !newBoard[nr][nc].isRevealed) {
-            queue.push([nr, nc]);
-          }
-        }
+  if (lost) {
+    for (const row of board) {
+      for (const cell of row) {
+        if (cell.isMine) cell.isRevealed = true;
       }
+    }
+
+    setState("lost");
+  } else if (won) setState("won");
+
+  setBoard(board);
+}
+
+function evaluateGame(board: Board) {
+  let hiddenNonMine = 0;
+  let mineRevealed = false;
+
+  for (const row of board) {
+    for (const cell of row) {
+      if (!cell.isRevealed && !cell.isMine) hiddenNonMine++;
+      if (cell.isRevealed && cell.isMine) mineRevealed = true;
     }
   }
 
-  setBoard(newBoard);
-
-  const hiddenCells = newBoard.flat().filter((cell) => !cell.isRevealed);
-  const won = hiddenCells.every((cell) => cell.isMine);
-
-  if (won) setState("won");
+  return {
+    won: hiddenNonMine === 0,
+    lost: mineRevealed,
+  };
 }
 
+type GetAroundCellProps = {
+  coord: Coords;
+  board: Board;
+};
+
+function getAroundCell(
+  { coord, board }: GetAroundCellProps,
+  filter?: (cell: Cell) => boolean,
+) {
+  const directions = [
+    { col: -1, row: -1 },
+    { col: 0, row: -1 },
+    { col: 1, row: -1 },
+    { col: -1, row: 0 },
+    { col: 1, row: 0 },
+    { col: -1, row: 1 },
+    { col: 0, row: 1 },
+    { col: 1, row: 1 },
+  ];
+
+  return directions
+    .map(({ col, row }) => ({
+      col: coord.col + col,
+      row: coord.row + row,
+    }))
+    .filter(({ row, col }) => board[row] && board[row][col])
+    .map(({ row, col }) => board[row][col])
+    .filter((cell) => (filter ? filter(cell) : true));
+}
 function toggleFlag({
   state,
   board,
