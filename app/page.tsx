@@ -262,11 +262,7 @@ function StartGame({ game }: StartGameProps) {
         >
           Médio
         </Button>
-        <Button
-          variant="danger"
-          size="lg"
-          onClick={() => handleStart("medium")}
-        >
+        <Button variant="danger" size="lg" onClick={() => handleStart("hard")}>
           Difícil
         </Button>
       </div>

@@ -137,7 +137,17 @@ class AudioManager {
   }
 }
 
-const audioManager = new AudioManager(musicList, soundsList);
+let audioManager: AudioManager | null = null;
+
+function getAudioManager() {
+  if (typeof window === "undefined") return null;
+
+  if (!audioManager) {
+    audioManager = new AudioManager(musicList, soundsList);
+  }
+
+  return audioManager;
+}
 
 type AudioContextType = {
   soundsEnabled: boolean;
@@ -162,19 +172,23 @@ const AudioContext = createContext<AudioContextType | null>(null);
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [soundsEnabled, setSoundsEnabled] = useState(() => {
+    if (typeof window === "undefined") return true;
     return localStorage.getItem("soundsEnabled") !== "false";
   });
 
+  const [musicEnabled, setMusicEnabled] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("musicEnabled") !== "false";
+  });
+
   const [soundsVolume, setSoundsVolume] = useState(() => {
+    if (typeof window === "undefined") return 0.2;
     return +(localStorage.getItem("soundsVolume") || "0.2") || 0.2;
   });
 
   const [musicVolume, setMusicVolume] = useState(() => {
+    if (typeof window === "undefined") return 0.02;
     return +(localStorage.getItem("musicVolume") || "0.02") || 0.02;
-  });
-
-  const [musicEnabled, setMusicEnabled] = useState(() => {
-    return localStorage.getItem("musicEnabled") !== "false";
   });
 
   useEffect(() => {
@@ -186,14 +200,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   }, [musicVolume]);
 
   useEffect(() => {
-    audioManager.setSoundEnabled(soundsEnabled);
+    getAudioManager()?.setSoundEnabled(soundsEnabled);
     localStorage.setItem("soundsEnabled", String(soundsEnabled));
   }, [soundsEnabled]);
 
   useEffect(() => {
-    audioManager.setMusicEnabled(musicEnabled);
+    getAudioManager()?.setMusicEnabled(musicEnabled);
     localStorage.setItem("musicEnabled", String(musicEnabled));
-    audioManager.playMusic();
   }, [musicEnabled]);
 
   const value = useMemo(
@@ -205,27 +218,27 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       musicVolume,
       setSoundsVolume: (volume: number) => {
         setSoundsVolume(volume);
-        audioManager.setSoundsVolume(volume);
+        getAudioManager()?.setSoundsVolume(volume);
       },
       setMusicVolume: (volume: number) => {
         setMusicVolume(volume);
-        audioManager.setMusicVolume(volume);
+        getAudioManager()?.setMusicVolume(volume);
       },
       toggleSounds: () => setSoundsEnabled((p) => !p),
       toggleMusic: () => setMusicEnabled((p) => !p),
       setMusicEnabled: (bool: boolean) => setMusicEnabled(bool),
 
       stopMusic: () => {
-        audioManager.stopMusic();
+        getAudioManager()?.stopMusic();
       },
       playSound: (key: SoundKey, rate = 1) => {
-        audioManager.setSoundsVolume(soundsVolume);
-        audioManager.playSound(key, rate);
+        getAudioManager()?.setSoundsVolume(soundsVolume);
+        getAudioManager()?.playSound(key, rate);
       },
 
       playMusic: () => {
-        audioManager.setMusicVolume(musicVolume);
-        audioManager.playMusic();
+        getAudioManager()?.setMusicVolume(musicVolume);
+        getAudioManager()?.playMusic();
       },
     }),
     [soundsEnabled, musicEnabled, musicVolume, soundsVolume],
