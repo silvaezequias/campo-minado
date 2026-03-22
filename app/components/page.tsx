@@ -1,3 +1,5 @@
+"use client";
+
 import { Button, ButtonSize, ButtonVariant } from "@/components/Button";
 import { Check } from "lucide-react";
 import React from "react";
