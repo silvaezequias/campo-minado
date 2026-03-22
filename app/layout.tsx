@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fredoka } from "next/font/google";
 import "./globals.css";
+import { AudioProvider } from "@/utils/audio";
 
 export const fontFamily = Fredoka({
   variable: "--font-fredoka-sans",
@@ -46,7 +47,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-br">
-      <body className={`${fontFamily.className} antialiased`}>{children}</body>
+      <body className={`${fontFamily.className} antialiased`}>
+        <AudioProvider>{children}</AudioProvider>
+      </body>
     </html>
   );
 }

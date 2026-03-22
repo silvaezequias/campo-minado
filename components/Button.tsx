@@ -1,4 +1,5 @@
-import { JSX, MouseEventHandler } from "react";
+import { useAudioHelpers } from "@/utils/audio";
+import { JSX, MouseEventHandler, TouchEventHandler, useCallback } from "react";
 
 export type ButtonVariant =
   | "default"
@@ -24,6 +25,7 @@ export type ButtonProps = {
   onContextMenu?: MouseEventHandler<HTMLButtonElement>;
   onMouseUp?: MouseEventHandler<HTMLButtonElement>;
   onMouseDown?: MouseEventHandler<HTMLButtonElement>;
+  onMouseEnter?: MouseEventHandler<HTMLButtonElement>;
 };
 
 export const Button = ({
@@ -40,11 +42,17 @@ export const Button = ({
   onMouseDown,
   onMouseUp,
 }: ButtonProps) => {
+  const { playHoverSound } = useAudioHelpers();
+
+  const handleHoverSound = useCallback(() => {
+    if (clickable) playHoverSound();
+  }, [clickable, playHoverSound]);
+
   const variantStyle = {
-    default: "bg-zinc-800 border-none",
+    default: "bg-zinc-800 border-neutral-950/70 ",
     primary: "bg-amber-300 border-amber-900/60 text-zinc-950",
     secondary: "bg-amber-300/60 border-amber-900/40 text-zinc-950/50",
-    danger: "bg-zinc-900 ring ring-red-500 text-red-500",
+    danger: "bg-red-500/80 border-red-900 text-zinc-950",
     success: "bg-zinc-900 ring ring-lime-500 text-lime-500",
     outline: "text-amber-300 border border-amber-300/60",
     ghost: "text-white border-none",
@@ -88,7 +96,7 @@ export const Button = ({
     default: "hover:bg-zinc-700 cursor-pointer",
     primary: "hover:opacity-80 cursor-pointer",
     secondary: "hover:opacity-80 cursor-pointer",
-    danger: "hover:bg-zinc-950 cursor-pointer",
+    danger: "hover:opacity-80 cursor-pointer",
     success: "hover:bg-zinc-950 cursor-pointer",
     outline: "hover:bg-zinc-800 cursor-pointer",
     ghost: "hover:bg-zinc-800 cursor-pointer",
@@ -99,10 +107,15 @@ export const Button = ({
       onClick={onClick}
       onContextMenu={onContextMenu}
       onMouseDown={onMouseDown}
+      onTouchStart={
+        onMouseDown as unknown as TouchEventHandler<HTMLButtonElement>
+      }
+      onTouchEnd={onMouseUp as unknown as TouchEventHandler<HTMLButtonElement>}
       onMouseUp={onMouseUp}
+      onMouseEnter={handleHoverSound}
       className={`
         tracking-wide uppercase justify-center 
-        flex items-center transition-all select-none
+        flex items-center transition-transform select-none
         ${variantStyle} ${sizeStyle} ${clicableStyle} ${aspectStyle} ${className}
         ${clickable ? hoverStyle : ""} ${paddingStyle}
         `}
