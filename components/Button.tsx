@@ -52,8 +52,8 @@ export const Button = ({
     default: "bg-zinc-800 border-neutral-950/70 ",
     primary: "bg-amber-300 border-amber-900/60 text-zinc-950",
     secondary: "bg-amber-300/60 border-amber-900/40 text-zinc-950/50",
-    danger: "bg-red-500/80 border-red-900 text-zinc-950",
-    success: "bg-zinc-900 ring ring-lime-500 text-lime-500",
+    danger: "bg-red-400/80 border-red-900/70 text-zinc-950",
+    success: "bg-green-500/80 border-green-900 text-zinc-950",
     outline: "text-amber-300 border border-amber-300/60",
     ghost: "text-white border-none",
   }[variant];
@@ -97,7 +97,7 @@ export const Button = ({
     primary: "hover:opacity-80 cursor-pointer",
     secondary: "hover:opacity-80 cursor-pointer",
     danger: "hover:opacity-80 cursor-pointer",
-    success: "hover:bg-zinc-950 cursor-pointer",
+    success: "hover:opacity-80  cursor-pointer",
     outline: "hover:bg-zinc-800 cursor-pointer",
     ghost: "hover:bg-zinc-800 cursor-pointer",
   }[variant];

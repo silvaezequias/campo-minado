@@ -254,7 +254,7 @@ function StartGame({ game }: StartGameProps) {
       <div className="flex gap-5 flex-wrap justify-center">
         <Button
           className="text-xl md:text-2xl w-full md:w-fit"
-          variant="default"
+          variant="success"
           onClick={() => handleStart("easy")}
         >
           Fácil

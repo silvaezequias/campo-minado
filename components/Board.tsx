@@ -107,13 +107,13 @@ export function getCellIconColor({
   currentState,
 }: GetCellIconColorProps): string {
   if (currentState === "LOST") {
-    if (cell.isTriggered) return "text-red-500 border-red-500/30";
-    if (cell.isFlagged && cell.isMine) return "text-red-500 border-red-500";
-    if (cell.isFlagged && !cell.isMine) return "text-red-500 border-red-500/20";
-    if (cell.isFlagged) return "fill-red-500 text-red-500";
+    if (cell.isTriggered) return "text-red-400 border-red-400/30";
+    if (cell.isFlagged && cell.isMine) return "text-red-400 border-red-400";
+    if (cell.isFlagged && !cell.isMine) return "text-red-400 border-red-400/20";
+    if (cell.isFlagged) return "fill-red-400 text-red-400";
     if (cell.isMine) return "fill-zinc-950 text-zinc-950";
   } else if (currentState === "PLAYING" || currentState === "WON") {
-    if (cell.isFlagged) return "fill-red-500 text-red-500 border-red-500/20";
+    if (cell.isFlagged) return "fill-red-400 text-red-400 border-red-400/20";
   }
 
   return "";
