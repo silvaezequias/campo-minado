@@ -1,5 +1,6 @@
 import {
   ChangeDifficultyAction,
+  ChangeGameMode,
   ClearPreviewCellsAction,
   LostAction,
   ResetAction,
@@ -34,6 +35,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return ClearPreviewCellsAction(state);
     case Actions.ChangeDifficulty:
       return ChangeDifficultyAction(state, action);
+    case Actions.ChangeGameMode:
+      return ChangeGameMode(state, action);
+
     default:
       return state;
   }

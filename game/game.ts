@@ -1,5 +1,6 @@
 import { ButtonSize } from "@/components/Button";
 import { DIFFICULTIES } from "./util";
+import { Modes } from "./mode";
 
 export type ActionMap = Record<
   Actions,
@@ -24,6 +25,7 @@ export enum Actions {
   SetPreviewCells = "SET_PREVIEW_CELLS",
   ClearPreviewCells = "CLEAR_PREVIEW_CELLS",
   ChangeDifficulty = "CHANGE_DIFFICULTY",
+  ChangeGameMode = "CHANGE_GAME_MODE",
 }
 
 export type GameAction =
@@ -36,7 +38,8 @@ export type GameAction =
   | { type: Actions.Reset; payload: { settings: Settings } }
   | { type: Actions.SetFlagMode; payload: { isFlagMode: boolean } }
   | { type: Actions.SetPreviewCells; payload: { cells: Set<string> } }
-  | { type: Actions.ChangeDifficulty; payload: { difficulty: Difficulties } };
+  | { type: Actions.ChangeDifficulty; payload: { difficulty: Difficulties } }
+  | { type: Actions.ChangeGameMode; payload: { mode: Modes } };
 
 export type Action<T extends Actions> = (
   state: GameState,
@@ -55,6 +58,7 @@ export type GameState = {
   time: number;
   isFlagMode: boolean;
   board: Board;
+  mode: Modes;
 };
 
 export type Coord = {

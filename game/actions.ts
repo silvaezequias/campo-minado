@@ -63,6 +63,21 @@ export const ChangeDifficultyAction: Action<Actions.ChangeDifficulty> = (
   };
 };
 
+export const ChangeGameMode: Action<Actions.ChangeGameMode> = (
+  state,
+  action,
+) => {
+  if (!action?.payload.mode) return state;
+
+  return {
+    ...ResetAction(state, {
+      type: Actions.Reset,
+      payload: { settings: state.settings },
+    }),
+    mode: action.payload.mode,
+  };
+};
+
 export const UpdateBoard: Action<Actions.UpdateBoard> = (state, action) => {
   if (!action?.payload.board) return state;
 

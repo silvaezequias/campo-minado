@@ -1,19 +1,78 @@
 "use client";
 
-import { Board } from "@/components/Board";
-import { Button } from "@/components/Button";
-import { Header } from "@/components/Header";
-import { Actions, Difficulties } from "@/game/game";
-import { Engine, useGameEngine } from "@/game/useGameEngine";
-import { getFlaggedCount } from "@/game/util";
-import { useAudio } from "@/utils/audio";
-import { ArrowRight, Flag, RotateCcw, Shovel } from "lucide-react";
-import { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
+import { ArrowRight, Flag, RotateCcw, Shovel, LucideIcon } from "lucide-react";
 
-export default function Minesweeper() {
-  const game = useGameEngine();
+import { Actions, Difficulties } from "@/game/game";
+import { Modes } from "@/game/mode";
+import { Engine, useGameEngine } from "@/game/useGameEngine";
+import { useGameSettings } from "@/game/useGameSettings";
+import { useAudio } from "@/utils/audio";
+
+import { Board } from "@/components/Board";
+import { Button as BaseButton } from "@/components/Button";
+import { Header } from "@/components/Header";
+
+interface SubComponentProps {
+  game: Engine;
+}
+
+const StartGame: React.FC<SubComponentProps> = ({ game }) => {
+  const { playMusic, stopMusic } = useAudio();
+  const { dispatch } = game;
+
+  useEffect(() => {
+    stopMusic();
+  }, [stopMusic]);
+
+  const handleStart = (difficulty: Difficulties) => {
+    dispatch({ type: Actions.ChangeDifficulty, payload: { difficulty } });
+    playMusic();
+  };
+
+  const difficultyOptions: {
+    label: string;
+    value: Difficulties;
+    variant: "success" | "primary" | "danger";
+  }[] = [
+    { label: "Fácil", value: "easy", variant: "success" },
+    { label: "Médio", value: "medium", variant: "primary" },
+    { label: "Difícil", value: "hard", variant: "danger" },
+  ];
+
+  return (
+    <div className="bg-[#1A1A1A] p-10 border aspect-square border-zinc-800 rounded-xl flex flex-col justify-center items-center gap-10">
+      <h3 className="text-amber-300 font-bold text-xl sm:text-3xl text-center">
+        Escolha uma dificuldade para começar o jogo
+      </h3>
+      <div className="flex gap-5 flex-wrap justify-center">
+        {difficultyOptions.map((opt) => (
+          <BaseButton
+            key={opt.value}
+            className="text-xl md:text-2xl w-full md:w-fit"
+            variant={opt.variant}
+            onClick={() => handleStart(opt.value)}
+          >
+            {opt.label}
+          </BaseButton>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const GameControls: React.FC<SubComponentProps & { showHotkeys: boolean }> = ({
+  game,
+  showHotkeys,
+}) => {
   const { state, dispatch } = game;
-  const { settings, currentState, isFlagMode, time, difficulty } = state;
+  const { currentState, isFlagMode, settings, difficulty } = state;
+
+  const nextDifficulty: Record<Difficulties, Difficulties> = {
+    easy: "medium",
+    medium: "hard",
+    hard: "easy",
+  };
 
   const buttonMessage = {
     easy: "Ir para nível Médio",
@@ -26,67 +85,151 @@ export default function Minesweeper() {
     ),
   };
 
-  const nextDifficulty: Record<Difficulties, Difficulties> = {
-    easy: "medium",
-    medium: "hard",
-    hard: "easy",
-  };
+  if (currentState === "LOST" || currentState === "WON") {
+    const isWon = currentState === "WON";
+    return (
+      <div className="flex flex-col gap-5">
+        <BaseButton
+          variant="primary"
+          className="w-full rounded-4xl font-semibold"
+          size="lg"
+          icon={isWon ? ArrowRight : RotateCcw}
+          onClick={() => {
+            if (isWon) {
+              dispatch({
+                type: Actions.ChangeDifficulty,
+                payload: { difficulty: nextDifficulty[difficulty] },
+              });
+            } else {
+              dispatch({ type: Actions.Reset, payload: { settings } });
+            }
+          }}
+        >
+          {isWon ? buttonMessage[difficulty] : buttonMessage.retry}
+        </BaseButton>
+        <div
+          className={`font-black text-2xl text-center uppercase italic animate-pulse ${isWon ? "text-green-700" : "text-red-700"}`}
+        >
+          {isWon ? "Você venceu!" : "Você perdeu!"}
+        </div>
+      </div>
+    );
+  }
+
+  if (currentState === "PLAYING") {
+    return (
+      <div className="flex gap-2">
+        <ControlButton
+          active={!isFlagMode}
+          icon={Shovel}
+          hotkey="d"
+          showHotkeys={showHotkeys}
+          className="w-full"
+          onClick={() =>
+            dispatch({
+              type: Actions.SetFlagMode,
+              payload: { isFlagMode: false },
+            })
+          }
+        />
+        <ControlButton
+          active={isFlagMode}
+          icon={Flag}
+          hotkey="f"
+          showHotkeys={showHotkeys}
+          className="w-full"
+          onClick={() =>
+            dispatch({
+              type: Actions.SetFlagMode,
+              payload: { isFlagMode: true },
+            })
+          }
+        />
+        <ControlButton
+          icon={RotateCcw}
+          hotkey="r"
+          showHotkeys={showHotkeys}
+          className="w-fit"
+          onClick={() =>
+            dispatch({ type: Actions.Reset, payload: { settings } })
+          }
+        />
+      </div>
+    );
+  }
+
+  return null;
+};
+
+const ControlButton = ({
+  active = false,
+  icon,
+  hotkey,
+  showHotkeys,
+  onClick,
+  className,
+}: {
+  active?: boolean;
+  icon: LucideIcon;
+  hotkey: string;
+  showHotkeys: boolean;
+  onClick: () => void;
+  className?: string;
+}) => (
+  <BaseButton
+    variant={active ? "primary" : "default"}
+    className={`rounded-4xl font-normal text-xl ${className}`}
+    size="lg"
+    icon={icon}
+    onClick={onClick}
+    fillIcon={active ? "fill-zinc-950" : ""}
+  >
+    {showHotkeys && <span className="hidden md:inline-block">({hotkey})</span>}
+  </BaseButton>
+);
+
+export default function Minesweeper() {
+  const game = useGameEngine();
+  const { state, dispatch } = game;
+  const { settings, currentState, isFlagMode, time } = state;
+
+  const gameSettings = useGameSettings(game);
+  const { showHotkeys } = gameSettings;
 
   const handleKeyPress = useCallback(
-    function (event: KeyboardEvent) {
-      switch (event.key) {
-        case "r":
-          dispatch({
-            type: Actions.Reset,
-            payload: { settings: settings },
-          });
-          break;
-        case "f":
-          if (currentState === "PLAYING")
-            dispatch({
-              type: Actions.SetFlagMode,
-              payload: {
-                isFlagMode: true,
-              },
-            });
-          break;
-        case "d":
-          if (currentState === "PLAYING")
-            dispatch({
-              type: Actions.SetFlagMode,
-              payload: {
-                isFlagMode: false,
-              },
-            });
-          break;
-        case "m":
-          if (currentState === "PLAYING")
-            dispatch({
-              type: Actions.SetFlagMode,
-              payload: {
-                isFlagMode: !isFlagMode,
-              },
-            });
-          break;
+    (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+
+      if (key === "r") {
+        dispatch({ type: Actions.Reset, payload: { settings } });
+        return;
+      }
+
+      if (currentState !== "PLAYING") return;
+
+      const keyMap: Record<string, boolean | undefined> = {
+        f: true,
+        d: false,
+        m: !isFlagMode,
+      };
+
+      if (keyMap[key] !== undefined) {
+        dispatch({
+          type: Actions.SetFlagMode,
+          payload: { isFlagMode: keyMap[key] },
+        });
       }
     },
     [currentState, dispatch, settings, isFlagMode],
   );
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    if (currentState !== "PLAYING") return;
 
-    if (currentState === "PLAYING") {
-      const speed = 1000;
-      interval = setInterval(
-        () =>
-          dispatch({
-            type: Actions.SetTime,
-            payload: { time: time + 1 },
-          }),
-        speed,
-      );
-    }
+    const interval = setInterval(() => {
+      dispatch({ type: Actions.SetTime, payload: { time: time + 1 } });
+    }, 1000);
+
     return () => clearInterval(interval);
   }, [currentState, time, dispatch]);
 
@@ -96,183 +239,32 @@ export default function Minesweeper() {
   }, [handleKeyPress]);
 
   return (
-    <div className="w-full h-screen flex justify-center md:items-center">
-      <div className="w-full md:w-[60%] lg:w-[50%] xl:w-[30%] py-10 px-5 flex flex-col gap-2">
-        <div className="flex flex-col gap-2">
-          <Header
-            totalBombs={settings.mines}
-            time={time}
-            leftFlags={settings.mines - getFlaggedCount(state.board)}
-            difficulty={difficulty}
-            currentState={currentState}
-            setDifficulty={(difficulty) => {
-              dispatch({
-                type: Actions.ChangeDifficulty,
-                payload: { difficulty },
-              });
-            }}
-          />
+    <div className="w-full h-screen flex justify-center items-center bg-zinc-950 text-white">
+      <div className="w-full sm:w-[80%] md:w-[60%] lg:w-[50%] xl:w-[30%] py-10 px-5 flex flex-col gap-2">
+        <Header
+          state={state}
+          gameSettings={gameSettings}
+          onChangeGameMode={(mode: Modes) =>
+            dispatch({ type: Actions.ChangeGameMode, payload: { mode } })
+          }
+          setDifficulty={(difficulty) =>
+            dispatch({
+              type: Actions.ChangeDifficulty,
+              payload: { difficulty },
+            })
+          }
+        />
+
+        <main className="flex flex-col gap-2">
           {currentState === "START" ? (
             <StartGame game={game} />
           ) : (
-            <Board game={game} />
+            <>
+              <Board game={game} />
+              <GameControls game={game} showHotkeys={showHotkeys} />
+            </>
           )}
-        </div>
-        {currentState !== "START" && (
-          <div>
-            {currentState === "LOST" || currentState === "WON" ? (
-              <Button
-                variant="primary"
-                className="w-full rounded-4xl font-semibold"
-                size="lg"
-                icon={currentState === "WON" ? ArrowRight : RotateCcw}
-                onClick={() => {
-                  if (currentState === "WON")
-                    dispatch({
-                      type: Actions.ChangeDifficulty,
-                      payload: { difficulty: nextDifficulty[difficulty] },
-                    });
-                  else
-                    dispatch({
-                      type: Actions.Reset,
-                      payload: { settings },
-                    });
-                }}
-              >
-                {currentState === "WON"
-                  ? buttonMessage[difficulty]
-                  : buttonMessage.retry}
-              </Button>
-            ) : currentState === "PLAYING" ? (
-              <div className="flex gap-2">
-                <Button
-                  variant={isFlagMode ? "default" : "primary"}
-                  className="w-full rounded-4xl font-semibold"
-                  size="lg"
-                  icon={Shovel}
-                  clickable={isFlagMode}
-                  onClick={() =>
-                    dispatch({
-                      type: Actions.SetFlagMode,
-                      payload: { isFlagMode: false },
-                    })
-                  }
-                  fillIcon={!isFlagMode ? "fill-zinc-950" : ""}
-                >
-                  <span className="hidden md:inline-block">(d)</span>
-                </Button>
-                <Button
-                  variant={isFlagMode ? "primary" : "default"}
-                  className="w-full rounded-4xl font-semibold"
-                  size="lg"
-                  icon={Flag}
-                  clickable={!isFlagMode}
-                  onClick={() =>
-                    dispatch({
-                      type: Actions.SetFlagMode,
-                      payload: { isFlagMode: true },
-                    })
-                  }
-                  fillIcon={isFlagMode ? "fill-zinc-950" : ""}
-                >
-                  <span className="hidden md:inline-block">(f)</span>
-                </Button>
-                <Button
-                  variant={"default"}
-                  className="w-full rounded-4xl font-semibold"
-                  size="lg"
-                  icon={RotateCcw}
-                  onClick={() =>
-                    dispatch({
-                      type: Actions.Reset,
-                      payload: { settings },
-                    })
-                  }
-                  fillIcon={isFlagMode ? "fill-zinc-950" : ""}
-                >
-                  <span className="hidden md:inline-block">(r)</span>
-                </Button>
-              </div>
-            ) : (
-              <Button
-                variant="primary"
-                className="w-full rounded-4xl font-semibold"
-                size="lg"
-                icon={Shovel}
-                clickable={false}
-                onClick={() =>
-                  dispatch({
-                    type: Actions.SetFlagMode,
-                    payload: { isFlagMode: false },
-                  })
-                }
-              />
-            )}
-            {(currentState === "LOST" || currentState === "WON") && (
-              <div
-                className={`mt-5 font-black text-2xl text-center uppercase italic animate-pulse ${currentState === "WON" ? "text-green-700" : "text-red-700"}`}
-              >
-                {currentState === "WON" ? "Você venceu!" : "Você perdeu!"}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-type StartGameProps = {
-  game: Engine;
-};
-
-function StartGame({ game }: StartGameProps) {
-  const { setMusicEnabled, playMusic, stopMusic } = useAudio();
-
-  const { dispatch } = game;
-
-  useEffect(() => {
-    stopMusic();
-  }, [setMusicEnabled, stopMusic]);
-
-  const handleStart = (difficulty: Difficulties) => {
-    dispatch({
-      type: Actions.ChangeDifficulty,
-      payload: { difficulty },
-    });
-
-    playMusic();
-  };
-
-  return (
-    <div
-      className={`bg-[#1A1A1A] p-10 border aspect-square border-zinc-800 rounded-xl flex flex-col justify-center items-center gap-10`}
-    >
-      <h3 className="text-amber-300 font-bold text-xl sm:text-3xl text-center">
-        Escolha uma dificuldade para começar o jogo
-      </h3>
-      <div className="flex gap-5 flex-wrap justify-center">
-        <Button
-          className="text-xl md:text-2xl w-full md:w-fit"
-          variant="success"
-          onClick={() => handleStart("easy")}
-        >
-          Fácil
-        </Button>
-        <Button
-          variant="primary"
-          onClick={() => handleStart("medium")}
-          className="text-xl md:text-2xl w-full md:w-fit"
-        >
-          Médio
-        </Button>
-        <Button
-          className="text-xl md:text-2xl w-full md:w-fit"
-          variant="danger"
-          onClick={() => handleStart("hard")}
-        >
-          Difícil
-        </Button>
+        </main>
       </div>
     </div>
   );

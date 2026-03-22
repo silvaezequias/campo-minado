@@ -13,6 +13,7 @@ export type ButtonAspect = "no-aspect" | "square";
 export type ButtonSize = "smr" | "sm" | "md" | "lg" | "xl";
 
 export type ButtonProps = {
+  title?: string;
   variant?: ButtonVariant;
   aspect?: ButtonAspect;
   size?: ButtonSize;
@@ -41,6 +42,7 @@ export const Button = ({
   onContextMenu,
   onMouseDown,
   onMouseUp,
+  title,
 }: ButtonProps) => {
   const { playHoverSound } = useAudioHelpers();
 
@@ -60,7 +62,7 @@ export const Button = ({
 
   const aspectStyle = {
     "no-aspect": "",
-    square: "aspect-square px-0 py-0",
+    square: "aspect-square",
   }[aspect];
 
   const sizeStyle = {
@@ -104,6 +106,7 @@ export const Button = ({
 
   return (
     <button
+      title={title}
       onClick={onClick}
       onContextMenu={onContextMenu}
       onMouseDown={onMouseDown}
@@ -116,8 +119,8 @@ export const Button = ({
       className={`
         tracking-wide uppercase justify-center 
         flex items-center transition-transform select-none
-        ${variantStyle} ${sizeStyle} ${clicableStyle} ${aspectStyle} ${className}
-        ${clickable ? hoverStyle : ""} ${paddingStyle}
+        ${variantStyle} ${sizeStyle} ${clicableStyle} ${aspectStyle}
+        ${clickable ? hoverStyle : ""} ${paddingStyle} ${className}
         `}
     >
       {Icon && <Icon className={`${fillIcon} ${iconButtonSizeStyle}`} />}
