@@ -246,23 +246,31 @@ function StartGame({ game }: StartGameProps) {
 
   return (
     <div
-      className={`bg-[#1A1A1A] p-10 border border-zinc-800 aspect-square rounded-xl flex flex-col justify-center items-center gap-10`}
+      className={`bg-[#1A1A1A] p-10 border aspect-square border-zinc-800 rounded-xl flex flex-col justify-center items-center gap-10`}
     >
-      <h3 className="text-amber-300 font-bold text-4xl text-center">
+      <h3 className="text-amber-300 font-bold text-xl sm:text-3xl text-center">
         Escolha uma dificuldade para começar o jogo
       </h3>
-      <div className="flex gap-5">
-        <Button variant="default" size="lg" onClick={() => handleStart("easy")}>
+      <div className="flex gap-5 flex-wrap justify-center">
+        <Button
+          className="text-xl md:text-2xl w-full md:w-fit"
+          variant="default"
+          onClick={() => handleStart("easy")}
+        >
           Fácil
         </Button>
         <Button
           variant="primary"
-          size="lg"
           onClick={() => handleStart("medium")}
+          className="text-xl md:text-2xl w-full md:w-fit"
         >
           Médio
         </Button>
-        <Button variant="danger" size="lg" onClick={() => handleStart("hard")}>
+        <Button
+          className="text-xl md:text-2xl w-full md:w-fit"
+          variant="danger"
+          onClick={() => handleStart("hard")}
+        >
           Difícil
         </Button>
       </div>
