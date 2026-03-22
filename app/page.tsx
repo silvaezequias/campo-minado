@@ -123,7 +123,7 @@ export default function Minesweeper() {
             {currentState === "LOST" || currentState === "WON" ? (
               <Button
                 variant="primary"
-                className="w-full rounded-4xl"
+                className="w-full rounded-4xl font-semibold"
                 size="lg"
                 icon={currentState === "WON" ? ArrowRight : RotateCcw}
                 onClick={() => {
@@ -147,7 +147,7 @@ export default function Minesweeper() {
               <div className="flex gap-2">
                 <Button
                   variant={isFlagMode ? "default" : "primary"}
-                  className="w-full rounded-4xl"
+                  className="w-full rounded-4xl font-semibold"
                   size="lg"
                   icon={Shovel}
                   clickable={isFlagMode}
@@ -163,7 +163,7 @@ export default function Minesweeper() {
                 </Button>
                 <Button
                   variant={isFlagMode ? "primary" : "default"}
-                  className="w-full rounded-4x"
+                  className="w-full rounded-4xl font-semibold"
                   size="lg"
                   icon={Flag}
                   clickable={!isFlagMode}
@@ -177,11 +177,26 @@ export default function Minesweeper() {
                 >
                   <span className="hidden md:inline-block">(f)</span>
                 </Button>
+                <Button
+                  variant={"default"}
+                  className="w-full rounded-4xl font-semibold"
+                  size="lg"
+                  icon={RotateCcw}
+                  onClick={() =>
+                    dispatch({
+                      type: Actions.Reset,
+                      payload: { settings },
+                    })
+                  }
+                  fillIcon={isFlagMode ? "fill-zinc-950" : ""}
+                >
+                  <span className="hidden md:inline-block">(r)</span>
+                </Button>
               </div>
             ) : (
               <Button
                 variant="primary"
-                className="w-full rounded-4xl"
+                className="w-full rounded-4xl font-semibold"
                 size="lg"
                 icon={Shovel}
                 clickable={false}
