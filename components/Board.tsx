@@ -74,6 +74,21 @@ const BoardCell = ({
   onMouseDown,
   onMouseUp,
 }: BoardCellProps) => {
+  const [isRightClicking, setIsRightClicking] = useState(false);
+
+  const baseVariant = getCellVariant({ cell, isPreview, currentState });
+  const baseIcon = getCellIcon({ cell, currentState });
+
+  const variant =
+    isRightClicking && modes.includes(Modes.Decision) && !cell.isRevealed
+      ? "danger"
+      : baseVariant;
+
+  const icon =
+    isRightClicking && modes.includes(Modes.Decision) && !cell.isRevealed
+      ? FlagOff
+      : baseIcon;
+
   const content =
     cell.isRevealed && !cell.isMine ? (
       <DisplayCellContent indexDelay={cell.neighborMines} modes={modes}>
@@ -83,7 +98,6 @@ const BoardCell = ({
       ""
     );
 
-  const icon = getCellIcon({ cell, currentState });
   const fillIconColor = getCellIconColor({ cell, currentState });
 
   const animation = cell.isMine && cell.isRevealed && "animate-pulse";
@@ -91,6 +105,23 @@ const BoardCell = ({
     (currentState === "PLAYING" || currentState === "IDLE") &&
     !cell.isFlagged &&
     !isPreview;
+
+  const handleMouseDown: MouseEventHandler<HTMLButtonElement> = (event) => {
+    if (event.button === 2) setIsRightClicking(true);
+    onMouseDown(event);
+  };
+
+  useEffect(() => {
+    const handleGlobalMouseUp = (event: MouseEvent) => {
+      if (event.button === 2) setIsRightClicking(false);
+    };
+
+    window.addEventListener("mouseup", handleGlobalMouseUp);
+
+    return () => {
+      window.removeEventListener("mouseup", handleGlobalMouseUp);
+    };
+  }, []);
 
   return (
     <Button
@@ -102,9 +133,9 @@ const BoardCell = ({
       clickable={isClickable}
       onClick={onClick}
       onMouseUp={onMouseUp}
-      onMouseDown={onMouseDown}
+      onMouseDown={handleMouseDown}
       onContextMenu={onContextMenu}
-      variant={getCellVariant({ cell, isPreview, currentState })}
+      variant={variant}
     >
       {content || ""}
     </Button>
@@ -242,7 +273,6 @@ export function getCellIcon({ cell, currentState }: GetCellIconProps) {
 
   if (cell.isFlagged) return Flag;
 
-  // if (cell.isMine) {
   if (cell.isRevealed && cell.isMine) {
     return Bomb;
   }

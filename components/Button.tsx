@@ -28,6 +28,7 @@ export type ButtonProps = {
   onMouseUp?: MouseEventHandler<HTMLButtonElement>;
   onMouseDown?: MouseEventHandler<HTMLButtonElement>;
   onMouseEnter?: MouseEventHandler<HTMLButtonElement>;
+  onMouseLeave?: MouseEventHandler<HTMLButtonElement>;
 };
 
 export const Button = ({
@@ -45,6 +46,7 @@ export const Button = ({
   onContextMenu,
   onMouseDown,
   onMouseUp,
+  onMouseLeave,
 }: ButtonProps) => {
   const { playHoverSound } = useAudioHelpers();
 
@@ -120,6 +122,7 @@ export const Button = ({
       onTouchEnd={onMouseUp as unknown as TouchEventHandler<HTMLButtonElement>}
       onMouseUp={onMouseUp}
       onMouseEnter={handleHoverSound}
+      onMouseLeave={onMouseLeave}
       className={`
         tracking-wide uppercase justify-center 
         flex items-center transition-transform select-none

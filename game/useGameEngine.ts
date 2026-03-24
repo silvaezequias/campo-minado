@@ -48,7 +48,7 @@ export const useGameEngine = () => {
       }
 
       if (result.status === "FIRST_NON_FLAG" || result.status === "NON_FLAG") {
-        playSound("wrong_move");
+        if (!cell.isRevealed) playSound("wrong_move");
       }
 
       if (forceFlagMode || state.isFlagMode) {
