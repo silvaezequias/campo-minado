@@ -81,7 +81,8 @@ const GameControls: React.FC<SubComponentProps & { showHotkeys: boolean }> = ({
     hard: "Você é fera!",
     retry: (
       <>
-        Recomeçar <span className="hidden md:inline-block">(r)</span>
+        Recomeçar{" "}
+        {showHotkeys && <span className="hidden md:inline-block">(r)</span>}
       </>
     ),
   };

@@ -2,7 +2,7 @@
 import { Engine } from "@/game/useGameEngine";
 import { Button, ButtonSize, ButtonVariant } from "./Button";
 import { Bomb, Crosshair, Flag, FlagOff, Goal } from "lucide-react";
-import { MouseEventHandler } from "react";
+import { MouseEventHandler, useEffect, useState } from "react";
 import { Cell, GamePhase } from "@/game/game";
 import { Modes } from "@/game/mode";
 
@@ -76,7 +76,9 @@ const BoardCell = ({
 }: BoardCellProps) => {
   const content =
     cell.isRevealed && !cell.isMine ? (
-      <GetCellContentDisplay modes={modes} number={cell.neighborMines} />
+      <DisplayCellContent modes={modes}>
+        <GetCellContent modes={modes} number={cell.neighborMines} />
+      </DisplayCellContent>
     ) : (
       ""
     );
@@ -109,16 +111,57 @@ const BoardCell = ({
   );
 };
 
-type GetCellContentDisplayProps = {
+type DisplayCellContentProps = {
+  children: React.ReactNode;
+  modes: DisplayModes;
+};
+
+const DisplayCellContent = ({ children, modes }: DisplayCellContentProps) => {
+  const [visible, setVisible] = useState(true);
+  const [fadeOut, setFadeOut] = useState(false);
+
+  const DELAY = 5000;
+  const FADE_DURATION = 5000;
+
+  useEffect(() => {
+    if (!modes.includes(Modes.Memory)) return;
+
+    const fadeTimer = setTimeout(() => {
+      setFadeOut(true);
+    }, 0);
+
+    const removeTimer = setTimeout(() => {
+      setVisible(false);
+    }, DELAY + FADE_DURATION);
+
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(removeTimer);
+    };
+  }, [modes]);
+
+  if (!visible) return null;
+
+  return (
+    <div
+      className="w-full h-full"
+      style={{
+        opacity: fadeOut ? 0 : 1,
+        transition: `opacity ${FADE_DURATION}ms ease`,
+      }}
+    >
+      {children}
+    </div>
+  );
+};
+
+type GetCellContentProps = {
   children?: React.ReactNode;
   number: number;
   modes: DisplayModes;
 };
 
-const GetCellContentDisplay = ({
-  number,
-  modes,
-}: GetCellContentDisplayProps) => {
+const GetCellContent = ({ number, modes }: GetCellContentProps) => {
   const dicePatterns: Record<number, number[]> = {
     1: [4],
     2: [0, 8],

@@ -96,6 +96,10 @@ const List = ({
   modes: Modes[];
   onSelect: (mode: Modes) => void;
 }) => {
+  options = options.sort((a, b) => {
+    return Number(b.enabled) - Number(a.enabled);
+  });
+
   return (
     <div className="w-full flex flex-col gap-2">
       {options.map((option) => (

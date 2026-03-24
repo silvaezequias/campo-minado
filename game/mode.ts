@@ -90,7 +90,7 @@ export const MODES: ModeProps[] = [
       "Os números aparecem por um curto período e depois desaparecem. Você precisa memorizar o tabuleiro e usar lógica para continuar.",
     icon: Brain,
     isHard: true,
-    enabled: false,
+    enabled: true,
     group: ModeGroup.Base,
   },
   {
