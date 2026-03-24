@@ -4,6 +4,9 @@ import { Button, ButtonSize, ButtonVariant } from "./Button";
 import { Bomb, Crosshair, Flag, FlagOff, Goal } from "lucide-react";
 import { MouseEventHandler } from "react";
 import { Cell, GamePhase } from "@/game/game";
+import { Modes } from "@/game/mode";
+
+type DisplayModes = Modes[];
 
 type BoardProps = {
   game: Engine;
@@ -11,7 +14,8 @@ type BoardProps = {
 
 export const Board = ({ game }: BoardProps) => {
   const { state, cellEvents } = game;
-  const { settings, board, cellSize, currentState, previewCells } = state;
+  const { settings, board, cellSize, currentState, previewCells, modes } =
+    state;
   const { columns, rows } = settings;
 
   return (
@@ -27,6 +31,7 @@ export const Board = ({ game }: BoardProps) => {
         return row.map((cell) => {
           return (
             <BoardCell
+              modes={modes}
               cell={cell}
               size={cellSize}
               key={`x${cell.coord.col}y${cell.coord.row}`}
@@ -48,6 +53,7 @@ export const Board = ({ game }: BoardProps) => {
 
 type BoardCellProps = {
   cell: Cell;
+  modes: DisplayModes;
   size: ButtonSize;
   isPreview: boolean;
   currentState: GamePhase;
@@ -60,6 +66,7 @@ type BoardCellProps = {
 const BoardCell = ({
   cell,
   size,
+  modes,
   isPreview,
   currentState,
   onClick,
@@ -67,7 +74,12 @@ const BoardCell = ({
   onMouseDown,
   onMouseUp,
 }: BoardCellProps) => {
-  const content = cell.isRevealed && !cell.isMine ? cell.neighborMines : "";
+  const content =
+    cell.isRevealed && !cell.isMine ? (
+      <GetCellContentDisplay modes={modes} number={cell.neighborMines} />
+    ) : (
+      ""
+    );
 
   const icon = getCellIcon({ cell, currentState });
   const fillIconColor = getCellIconColor({ cell, currentState });
@@ -94,6 +106,53 @@ const BoardCell = ({
     >
       {content || ""}
     </Button>
+  );
+};
+
+type GetCellContentDisplayProps = {
+  children?: React.ReactNode;
+  number: number;
+  modes: DisplayModes;
+};
+
+const GetCellContentDisplay = ({
+  number,
+  modes,
+}: GetCellContentDisplayProps) => {
+  const dicePatterns: Record<number, number[]> = {
+    1: [4],
+    2: [0, 8],
+    3: [0, 4, 8],
+    4: [0, 2, 6, 8],
+    5: [0, 2, 4, 6, 8],
+    6: [0, 2, 3, 5, 6, 8],
+  };
+
+  const contentByMode = {
+    [Modes.Points]: (
+      <div className="grid grid-cols-3 grid-rows-3 w-[80%] h-[80%] p-[5%]">
+        {Array.from({ length: 9 }).map((_, i) => {
+          const isActive = dicePatterns[number]?.includes(i);
+
+          return (
+            <div key={i} className="flex items-center justify-center">
+              {isActive && (
+                <span className="w-[60%] aspect-square bg-zinc-950 rounded-full" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    ),
+  };
+
+  const contentToDisplay =
+    modes.includes(Modes.Points) && contentByMode[Modes.Points];
+
+  return (
+    <div className="w-full h-full flex items-center justify-center">
+      {contentToDisplay || number || ""}
+    </div>
   );
 };
 

@@ -2,16 +2,21 @@ import { ModeProps, Modes } from "@/game/mode";
 import { Modal, ModalHeader } from "./Modal";
 
 type Props = {
-  modes: ModeProps[];
-  value: Modes;
+  availableModes: ModeProps[];
+  modes: Modes[];
   open: boolean;
   onClose: () => void;
 };
 
-export const ModeInfoModal = ({ modes, value, open, onClose }: Props) => {
+export const ModeInfoModal = ({
+  availableModes,
+  modes,
+  open,
+  onClose,
+}: Props) => {
   if (!open) return null;
 
-  const selected = modes.find((m) => m.id === value);
+  const selected = availableModes.find((m) => modes.includes(m.id));
   if (!selected) return null;
 
   const Icon = selected.icon;

@@ -9,7 +9,7 @@ export const initialState: GameState = {
   time: 0,
   currentState: "START",
   isFlagMode: false,
-  mode: Modes.Classic,
+  modes: [Modes.Classic],
   previewCells: new Set(),
   settings: defaultSettings,
   difficulty: defaultDifficulty,

@@ -24,6 +24,7 @@ const soundsList = {
   win_voices: "/sounds/win_voices.wav",
   open: "/sounds/open.wav",
   switch: "/sounds/switch.wav",
+  wrong_move: "/sounds/wrong_move.wav",
 };
 
 type SoundKey = keyof typeof soundsList;
@@ -70,6 +71,7 @@ class AudioManager {
   setMusicEnabled(value: boolean) {
     this.musicEnabled = value;
     if (!value) this.stopMusic();
+    else this.playMusic();
   }
 
   playMusic() {

@@ -4,7 +4,7 @@ import React, { useCallback, useEffect } from "react";
 import { ArrowRight, Flag, RotateCcw, Shovel, LucideIcon } from "lucide-react";
 
 import { Actions, Difficulties } from "@/game/game";
-import { Modes } from "@/game/mode";
+import { Modes, toggleMode } from "@/game/mode";
 import { Engine, useGameEngine } from "@/game/useGameEngine";
 import { useGameSettings } from "@/game/useGameSettings";
 import { useAudio } from "@/utils/audio";
@@ -67,6 +67,7 @@ const GameControls: React.FC<SubComponentProps & { showHotkeys: boolean }> = ({
 }) => {
   const { state, dispatch } = game;
   const { currentState, isFlagMode, settings, difficulty } = state;
+  const isDecisionMode = state.modes.includes(Modes.Decision);
 
   const nextDifficulty: Record<Difficulties, Difficulties> = {
     easy: "medium",
@@ -136,6 +137,7 @@ const GameControls: React.FC<SubComponentProps & { showHotkeys: boolean }> = ({
           active={isFlagMode}
           icon={Flag}
           hotkey="f"
+          disabled={isDecisionMode}
           showHotkeys={showHotkeys}
           className="w-full"
           onClick={() =>
@@ -168,6 +170,7 @@ const ControlButton = ({
   showHotkeys,
   onClick,
   className,
+  disabled,
 }: {
   active?: boolean;
   icon: LucideIcon;
@@ -175,6 +178,7 @@ const ControlButton = ({
   showHotkeys: boolean;
   onClick: () => void;
   className?: string;
+  disabled?: boolean;
 }) => (
   <BaseButton
     variant={active ? "primary" : "default"}
@@ -182,6 +186,7 @@ const ControlButton = ({
     size="lg"
     icon={icon}
     onClick={onClick}
+    disabled={disabled}
     fillIcon={active ? "fill-zinc-950" : ""}
   >
     {showHotkeys && <span className="hidden md:inline-block">({hotkey})</span>}
@@ -191,7 +196,9 @@ const ControlButton = ({
 export default function Minesweeper() {
   const game = useGameEngine();
   const { state, dispatch } = game;
-  const { settings, currentState, isFlagMode, time } = state;
+  const { settings, currentState, isFlagMode, time, modes } = state;
+
+  const isDecisionMode = modes.includes(Modes.Decision);
 
   const gameSettings = useGameSettings(game);
   const { showHotkeys } = gameSettings;
@@ -216,12 +223,21 @@ export default function Minesweeper() {
       if (keyMap[key] !== undefined) {
         dispatch({
           type: Actions.SetFlagMode,
-          payload: { isFlagMode: keyMap[key] },
+          payload: { isFlagMode: !isDecisionMode ? keyMap[key] : false },
         });
       }
     },
-    [currentState, dispatch, settings, isFlagMode],
+    [currentState, dispatch, settings, isFlagMode, isDecisionMode],
   );
+
+  const handleChangeMode = (mode: Modes) => {
+    const modelist = toggleMode(modes, mode);
+
+    dispatch({
+      type: Actions.ChangeGameMode,
+      payload: { modes: modelist },
+    });
+  };
 
   useEffect(() => {
     if (currentState !== "PLAYING") return;
@@ -244,9 +260,7 @@ export default function Minesweeper() {
         <Header
           state={state}
           gameSettings={gameSettings}
-          onChangeGameMode={(mode: Modes) =>
-            dispatch({ type: Actions.ChangeGameMode, payload: { mode } })
-          }
+          onChangeGameMode={handleChangeMode}
           setDifficulty={(difficulty) =>
             dispatch({
               type: Actions.ChangeDifficulty,

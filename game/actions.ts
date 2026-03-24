@@ -67,14 +67,14 @@ export const ChangeGameMode: Action<Actions.ChangeGameMode> = (
   state,
   action,
 ) => {
-  if (!action?.payload.mode) return state;
+  if (!action?.payload.modes) return state;
 
   return {
     ...ResetAction(state, {
       type: Actions.Reset,
       payload: { settings: state.settings },
     }),
-    mode: action.payload.mode,
+    modes: action.payload.modes,
   };
 };
 

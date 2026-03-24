@@ -43,8 +43,9 @@ export const Header = ({
     handleChangeSettings,
   } = gameSettings;
 
-  const { mode, time, settings, currentState } = state;
+  const { modes, time, settings, currentState } = state;
 
+  const isDecisionMode = modes.includes(Modes.Decision);
   const leftFlags = settings.mines - getFlaggedCount(state.board);
   const totalBombs = settings.mines;
 
@@ -71,7 +72,7 @@ export const Header = ({
               <CircleQuestionMark className="text-amber-300" />
             </Button>
             <ModeList
-              value={mode}
+              modes={modes}
               options={MODES}
               onChange={onChangeGameMode}
               modeListOpen={modeListOpen}
@@ -95,7 +96,7 @@ export const Header = ({
           </div>
           <GameHeader
             time={time}
-            leftFlags={leftFlags}
+            leftFlags={isDecisionMode ? 0 : leftFlags}
             totalBombs={totalBombs}
             currentState={currentState}
             showTimer={showTimer}
@@ -105,8 +106,8 @@ export const Header = ({
       )}
 
       <ModeInfoModal
-        modes={MODES}
-        value={mode}
+        availableModes={MODES}
+        modes={modes}
         open={modeInfoOpen}
         onClose={() => setModeInfoOpen(false)}
       />

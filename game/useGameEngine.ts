@@ -10,6 +10,7 @@ import {
   revealAllMines,
 } from "./util";
 import { useAudio, useAudioHelpers } from "@/utils/audio";
+import { Modes } from "./mode";
 
 export type Engine = ReturnType<typeof useGameEngine>;
 
@@ -44,6 +45,10 @@ export const useGameEngine = () => {
 
       if (result.status === "FIRST_CLICK" || result.status === "FIRST_FLAG") {
         dispatch({ type: Actions.Start });
+      }
+
+      if (result.status === "FIRST_NON_FLAG" || result.status === "NON_FLAG") {
+        playSound("wrong_move");
       }
 
       if (forceFlagMode || state.isFlagMode) {
@@ -133,19 +138,23 @@ function resolveFirstClick(
   cell: Cell,
   forceFlagMode: boolean,
 ) {
+  const isDecisionMode = state.modes.includes(Modes.Decision);
+  const isFlagMode = forceFlagMode || state.isFlagMode;
+  const canPlaceFlag = !isDecisionMode && isFlagMode;
+
   const board = generateBoard({
     enableBombs: true,
     settings: state.settings,
     safeCellCoord: {
       ...cell.coord,
-      flagged: forceFlagMode || state.isFlagMode,
+      flagged: canPlaceFlag,
     },
   });
 
-  if (forceFlagMode || state.isFlagMode) {
+  if (isFlagMode) {
     return {
       board,
-      status: "FIRST_FLAG",
+      status: canPlaceFlag ? "FIRST_FLAG" : "FIRST_NON_FLAG",
     };
   }
 
@@ -169,8 +178,18 @@ function resolvePlayingClick(
 ) {
   let board = state.board;
 
-  if (forceFlagMode || state.isFlagMode) {
-    board = toggleFlag(board, cell.coord, state.settings.mines);
+  const isDecisionMode = state.modes.includes(Modes.Decision);
+  const isFlagMode = forceFlagMode || state.isFlagMode;
+
+  if (isFlagMode) {
+    if (!isDecisionMode) {
+      board = toggleFlag(board, cell.coord, state.settings.mines);
+    } else {
+      return {
+        board,
+        status: "NON_FLAG",
+      };
+    }
   } else {
     if (!cell.isRevealed) {
       board = floodRevealCells({

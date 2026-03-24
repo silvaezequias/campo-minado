@@ -22,6 +22,7 @@ export type ButtonProps = {
   className?: string;
   clickable?: boolean;
   fillIcon?: string;
+  disabled?: boolean;
   onClick?: MouseEventHandler<HTMLButtonElement>;
   onContextMenu?: MouseEventHandler<HTMLButtonElement>;
   onMouseUp?: MouseEventHandler<HTMLButtonElement>;
@@ -33,6 +34,8 @@ export const Button = ({
   variant = "default",
   aspect = "no-aspect",
   size = "md",
+  disabled = false,
+  title,
   clickable = true,
   children,
   icon: Icon,
@@ -42,9 +45,10 @@ export const Button = ({
   onContextMenu,
   onMouseDown,
   onMouseUp,
-  title,
 }: ButtonProps) => {
   const { playHoverSound } = useAudioHelpers();
+
+  clickable = !disabled && clickable;
 
   const handleHoverSound = useCallback(() => {
     if (clickable) playHoverSound();
@@ -107,7 +111,7 @@ export const Button = ({
   return (
     <button
       title={title}
-      onClick={onClick}
+      onClick={(event) => clickable && onClick?.(event)}
       onContextMenu={onContextMenu}
       onMouseDown={onMouseDown}
       onTouchStart={
@@ -121,6 +125,7 @@ export const Button = ({
         flex items-center transition-transform select-none
         ${variantStyle} ${sizeStyle} ${clicableStyle} ${aspectStyle}
         ${clickable ? hoverStyle : ""} ${paddingStyle} ${className}
+        ${disabled ? "opacity-40" : ""}
         `}
     >
       {Icon && <Icon className={`${fillIcon} ${iconButtonSizeStyle}`} />}

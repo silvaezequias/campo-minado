@@ -1,12 +1,12 @@
 import { Dispatch, SetStateAction } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, LockKeyhole } from "lucide-react";
 import { Button } from "./Button";
 import { ModeProps, Modes } from "@/game/mode";
 import { Modal, ModalHeader } from "./Modal";
 
 type ModeListProps = {
   options: ModeProps[];
-  value: Modes;
+  modes: Modes[];
   onChange: (mode: Modes) => void;
   modeListOpen: boolean;
   setModeListOpen: Dispatch<SetStateAction<boolean>>;
@@ -14,18 +14,20 @@ type ModeListProps = {
 
 export const ModeList = ({
   options,
-  value,
+  modes,
   modeListOpen,
   onChange,
   setModeListOpen,
 }: ModeListProps) => {
-  const selected = options.find((opt) => opt.id === value);
+  const activeModes = modes.map((m) => {
+    return options.find((o) => o.id === m);
+  }) as ModeProps[];
 
   return (
     <div className="w-full rounded-xl">
       <div className="flex gap-2 text-amber-300 ">
         <Trigger
-          selected={selected}
+          activeModes={activeModes}
           open={modeListOpen}
           onToggle={() => setModeListOpen((prev) => !prev)}
         />
@@ -40,10 +42,9 @@ export const ModeList = ({
             />
             <List
               options={options}
-              value={value}
+              modes={modes}
               onSelect={(mode) => {
                 onChange(mode);
-                setModeListOpen(false);
               }}
             />
           </div>
@@ -54,34 +55,33 @@ export const ModeList = ({
 };
 
 const Trigger = ({
-  selected,
-  open,
+  activeModes,
   onToggle,
 }: {
-  selected?: ModeProps;
+  activeModes: ModeProps[];
   open: boolean;
   onToggle: () => void;
 }) => {
-  const SelectedIcon = selected?.icon;
-
   return (
     <Button
       onClick={onToggle}
       variant="ghost"
       className="w-full justify-center py-3 bg-neutral-800/60 border-zinc-800/60"
     >
-      <span className="tracking-widest uppercase text-sm flex gap-2 text-amber-300 items-center">
-        {selected ? (
-          <>
-            {SelectedIcon && <SelectedIcon className="size-5" />}
-            {selected.label}
-          </>
-        ) : (
-          "Selecionar Modo"
-        )}
-        <ChevronDown
-          className={`transition-transform ${open ? "rotate-180" : ""}`}
-        />
+      <span className="tracking-widest uppercase text-sm flex gap-1 text-amber-300 items-center">
+        <span className="hidden md:inline-block">MODOS:</span>
+        {activeModes?.map((current, index) => {
+          const SelectedIcon = current.icon;
+          return (
+            <div key={current.id} className="flex items-center gap-1">
+              {SelectedIcon && <SelectedIcon className="size-5" />}
+
+              {index < activeModes.length - 1 && (
+                <span className="font-medium opacity-50">•</span>
+              )}
+            </div>
+          );
+        })}
       </span>
     </Button>
   );
@@ -89,20 +89,20 @@ const Trigger = ({
 
 const List = ({
   options,
-  value,
+  modes,
   onSelect,
 }: {
   options: ModeProps[];
-  value: Modes;
+  modes: Modes[];
   onSelect: (mode: Modes) => void;
 }) => {
   return (
-    <div className="w-full flex flex-col gap-1">
+    <div className="w-full flex flex-col gap-2">
       {options.map((option) => (
         <Item
           key={option.id}
           option={option}
-          isSelected={option.id === value}
+          isSelected={modes.includes(option.id)}
           onClick={() => onSelect(option.id)}
         />
       ))}
@@ -124,9 +124,9 @@ const Item = ({
   return (
     <Button
       onClick={onClick}
-      clickable={!isSelected}
+      disabled={!option.enabled}
       variant={isSelected ? "outline" : "default"}
-      className="w-full flex items-center justify-between px-4 py-3"
+      className={`w-full flex items-center justify-between px-4 py-3 border-none ${isSelected && "ring ring-amber-300"}`}
     >
       <div className="w-full flex items-center justify-between">
         <div className="flex gap-3 items-center">
@@ -137,22 +137,26 @@ const Item = ({
               {option.label}
             </span>
 
-            <span className="text-xs font-semibold text-start">
+            <span className="text-xs font-normal text-start">
               {option.description}
             </span>
           </div>
         </div>
-
-        {isSelected ? (
-          <>
-            <div className="text-xs hidden md:inline-block">Selecionado</div>
-            <div className="text-xs md:hidden">
-              <Check />
-            </div>
-          </>
-        ) : option.isHard ? (
-          <div className="text-red-400 text-xs">Difícil</div>
-        ) : null}
+        <div className="flex gap-2 items-center">
+          {option.isHard && (
+            <div className="text-red-500 text-xs tracking-widest">Difícil</div>
+          )}
+          <div className="text-xs border rounded bg-zinc-900 border-zinc-300/10 p-1">
+            {option.enabled ? (
+              <Check
+                size="15"
+                className={isSelected ? "text-amber-300" : "text-zinc-900"}
+              />
+            ) : (
+              <LockKeyhole size="15" className="text-red-400" />
+            )}
+          </div>
+        </div>
       </div>
     </Button>
   );

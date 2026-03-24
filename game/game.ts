@@ -39,7 +39,7 @@ export type GameAction =
   | { type: Actions.SetFlagMode; payload: { isFlagMode: boolean } }
   | { type: Actions.SetPreviewCells; payload: { cells: Set<string> } }
   | { type: Actions.ChangeDifficulty; payload: { difficulty: Difficulties } }
-  | { type: Actions.ChangeGameMode; payload: { mode: Modes } };
+  | { type: Actions.ChangeGameMode; payload: { modes: Modes[] } };
 
 export type Action<T extends Actions> = (
   state: GameState,
@@ -58,7 +58,7 @@ export type GameState = {
   time: number;
   isFlagMode: boolean;
   board: Board;
-  mode: Modes;
+  modes: Modes[];
 };
 
 export type Coord = {
