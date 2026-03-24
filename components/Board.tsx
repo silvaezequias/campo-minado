@@ -76,7 +76,7 @@ const BoardCell = ({
 }: BoardCellProps) => {
   const content =
     cell.isRevealed && !cell.isMine ? (
-      <DisplayCellContent modes={modes}>
+      <DisplayCellContent indexDelay={cell.neighborMines} modes={modes}>
         <GetCellContent modes={modes} number={cell.neighborMines} />
       </DisplayCellContent>
     ) : (
@@ -114,14 +114,18 @@ const BoardCell = ({
 type DisplayCellContentProps = {
   children: React.ReactNode;
   modes: DisplayModes;
+  indexDelay: number;
 };
 
-const DisplayCellContent = ({ children, modes }: DisplayCellContentProps) => {
+const DisplayCellContent = ({
+  children,
+  modes,
+  indexDelay,
+}: DisplayCellContentProps) => {
   const [visible, setVisible] = useState(true);
   const [fadeOut, setFadeOut] = useState(false);
 
-  const DELAY = 5000;
-  const FADE_DURATION = 5000;
+  const DELAY = 3000 + indexDelay * 2000;
 
   useEffect(() => {
     if (!modes.includes(Modes.Memory)) return;
@@ -132,13 +136,13 @@ const DisplayCellContent = ({ children, modes }: DisplayCellContentProps) => {
 
     const removeTimer = setTimeout(() => {
       setVisible(false);
-    }, DELAY + FADE_DURATION);
+    }, DELAY + DELAY);
 
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(removeTimer);
     };
-  }, [modes]);
+  }, [DELAY, modes]);
 
   if (!visible) return null;
 
@@ -147,7 +151,7 @@ const DisplayCellContent = ({ children, modes }: DisplayCellContentProps) => {
       className="w-full h-full"
       style={{
         opacity: fadeOut ? 0 : 1,
-        transition: `opacity ${FADE_DURATION}ms ease`,
+        transition: `opacity ${DELAY}ms ease`,
       }}
     >
       {children}
