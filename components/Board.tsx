@@ -156,7 +156,7 @@ const DisplayCellContent = ({
   const [visible, setVisible] = useState(true);
   const [fadeOut, setFadeOut] = useState(false);
 
-  const DELAY = 3000 + indexDelay * 2000;
+  const DELAY = indexDelay * 2000 + 3000;
 
   useEffect(() => {
     if (!modes.includes(Modes.Memory)) return;
@@ -167,7 +167,7 @@ const DisplayCellContent = ({
 
     const removeTimer = setTimeout(() => {
       setVisible(false);
-    }, DELAY + DELAY);
+    }, DELAY);
 
     return () => {
       clearTimeout(fadeTimer);
