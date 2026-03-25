@@ -1,4 +1,4 @@
-import { Bomb, CircleQuestionMark, Flag } from "lucide-react";
+import { Bomb, CircleQuestionMark, Flag, Heart } from "lucide-react";
 import { Button } from "./Button";
 import { useAudio } from "@/utils/audio";
 import { Difficulties, GamePhase, GameState } from "@/game/game";
@@ -43,7 +43,7 @@ export const Header = ({
     handleChangeSettings,
   } = gameSettings;
 
-  const { modes, time, settings, currentState } = state;
+  const { modes, time, life, settings, currentState } = state;
 
   const isDecisionMode = modes.includes(Modes.Decision);
   const leftFlags = settings.mines - getFlaggedCount(state.board);
@@ -96,6 +96,8 @@ export const Header = ({
           </div>
           <GameHeader
             time={time}
+            life={life}
+            modes={modes}
             leftFlags={isDecisionMode ? 0 : leftFlags}
             totalBombs={totalBombs}
             currentState={currentState}
@@ -116,17 +118,32 @@ export const Header = ({
 };
 
 type GameHeaderProps = {
+  modes: Modes[];
   currentState: GamePhase;
   totalBombs: number;
   time: number;
+  life: number;
   leftFlags: number;
   showTimer: boolean;
   showFlagsLeft: boolean;
 };
 
 const GameHeader = (props: GameHeaderProps) => {
+  const isLifeMode = props.modes.includes(Modes.Life);
+
+  let grid = 1;
+
+  if (props.showTimer) grid++;
+  if (props.showFlagsLeft) grid++;
+  if (isLifeMode) grid++;
+
   return (
-    <div className="bg-neutral-800/60 border-zinc-800/60 w-full grid grid-cols-3 place-items-center align-middle text-2xl rounded-2xl py-3 px-5 border text-amber-300  tracking-widest">
+    <div
+      className="bg-neutral-800/60 border-zinc-800/60 w-full grid place-items-center align-middle text-2xl rounded-2xl py-3 px-5 border text-amber-300  tracking-widest"
+      style={{
+        gridTemplateColumns: `repeat(${grid}, 1fr)`,
+      }}
+    >
       <div className="font-semibold grid grid-cols-2 items-center">
         <Bomb className="size-5 fill-amber-300" />
         {props.totalBombs}
@@ -140,6 +157,13 @@ const GameHeader = (props: GameHeaderProps) => {
         <div className="font-semibold grid grid-cols-2 items-center">
           {props.leftFlags}
           <Flag className="size-5 fill-amber-300" />
+        </div>
+      )}
+
+      {isLifeMode && (
+        <div className="font-semibold grid grid-cols-2 items-center">
+          {props.life}
+          <Heart className="size-5 fill-amber-300" />
         </div>
       )}
     </div>

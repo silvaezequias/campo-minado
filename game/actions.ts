@@ -1,12 +1,33 @@
-import { Action, Actions } from "./game";
+import { Action, Actions, Settings } from "./game";
+import { Modes } from "./mode";
 import { DIFFICULTIES, generateBoard, getCellSize } from "./util";
+
+function getInitialLife(settings: Settings, modes: Modes[]) {
+  const hasLifeMode = modes.includes(Modes.Life);
+
+  if (!hasLifeMode) return 1;
+
+  switch (settings.mines) {
+    case 10: // fácil
+      return 3;
+    case 25: // médio
+      return 6;
+    case 45: // difícil
+      return 9;
+    default:
+      return 3;
+  }
+}
 
 export const ResetAction: Action<Actions.Reset> = (state, action) => {
   const settings = action?.payload.settings || state.settings;
 
+  const life = getInitialLife(settings, state.modes);
+
   return {
     ...state,
     time: 0,
+    life: life,
     isFlagMode: false,
     settings: settings,
     currentState: "IDLE",
@@ -70,10 +91,10 @@ export const ChangeGameMode: Action<Actions.ChangeGameMode> = (
   if (!action?.payload.modes) return state;
 
   return {
-    ...ResetAction(state, {
-      type: Actions.Reset,
-      payload: { settings: state.settings },
-    }),
+    ...ResetAction(
+      { ...state, modes: action.payload.modes },
+      { type: Actions.Reset, payload: { settings: state.settings } },
+    ),
     modes: action.payload.modes,
   };
 };
@@ -116,5 +137,12 @@ export const SetTimeAction: Action<Actions.SetTime> = (state, action) => {
   return {
     ...state,
     time: action.payload.time,
+  };
+};
+
+export const DamageAction: Action<Actions.Damage> = (state) => {
+  return {
+    ...state,
+    life: Math.max(0, state.life - 1),
   };
 };

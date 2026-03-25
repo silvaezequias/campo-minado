@@ -2,9 +2,9 @@
 
 ## ✅ Modo Pontos
 
-- [ ] Implementar renderização alternativa de números
-- [ ] Substituir números por quantidade equivalente de pontos (•)
-- [ ] Ajustar espaçamento/visual para múltiplos pontos
+- [x] Implementar renderização alternativa de números
+- [x] Substituir números por quantidade equivalente de pontos (•)
+- [x] Ajustar espaçamento/visual para múltiplos pontos
 
 **Ideia:**
 Transforma a leitura numérica em leitura visual. Em vez de números, o jogador interpreta a quantidade de bombas ao redor através de pontos. Mantém a lógica do jogo, mas muda a forma de percepção.
@@ -13,9 +13,9 @@ Transforma a leitura numérica em leitura visual. Em vez de números, o jogador 
 
 ## 🧠 Modo Memória
 
-- [ ] Exibir números por alguns segundos no início
-- [ ] Ocultar números após o tempo definido
-- [ ] Manter apenas células abertas sem indicação
+- [x] Exibir números por alguns segundos no início
+- [x] Ocultar números após o tempo definido
+- [x] Manter apenas células abertas sem indicação
 
 **Ideia:**
 O jogador vê o tabuleiro inicialmente, mas depois precisa confiar na memória para continuar jogando. Aumenta a dificuldade ao exigir retenção de informação e reconhecimento de padrões.
@@ -35,9 +35,9 @@ O jogador precisa resolver o tabuleiro sob pressão de tempo. Introduz urgência
 
 ## ❤️ Modo Vida
 
-- [ ] Implementar sistema de vidas (ex: 1 ou 2 chances)
-- [ ] Permitir erro sem encerrar o jogo imediatamente
-- [ ] Exibir contador de vidas na interface
+- [x] Implementar sistema de vidas (vidas por dificuldade)
+- [x] Permitir erro sem encerrar o jogo imediatamente
+- [x] Exibir contador de vidas na interface
 
 **Ideia:**
 Adiciona tolerância ao erro. Em vez de perder instantaneamente ao clicar em uma bomba, o jogador tem uma ou mais chances extras. Torna o jogo mais acessível e menos punitivo.
@@ -57,9 +57,9 @@ O tabuleiro não é estático. Bombas podem mudar de posição ou o estado pode 
 
 ## ⚠️ Modo Decisão
 
-- [ ] Remover sistema de bandeiras
-- [ ] Ajustar interface para ausência de marcações
-- [ ] Balancear dificuldade (opcional)
+- [x] Remover sistema de bandeiras
+- [x] Ajustar interface para ausência de marcações
+- [x] Balancear dificuldade (opcional)
 
 **Ideia:**
 O jogador não pode marcar possíveis bombas. Cada decisão é definitiva, aumentando o risco e exigindo mais confiança na própria análise.

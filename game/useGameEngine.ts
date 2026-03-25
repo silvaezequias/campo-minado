@@ -14,6 +14,15 @@ import { Modes } from "./mode";
 
 export type Engine = ReturnType<typeof useGameEngine>;
 
+type ActionResult = {
+  board: Board;
+  hitMine?: boolean;
+  placedFlag?: boolean;
+  removedFlag?: boolean;
+  revealed?: boolean;
+  invalidFlagAttempt?: boolean;
+};
+
 export const useGameEngine = () => {
   const [state, dispatch] = useReducer(gameReducer, initialState);
 
@@ -31,44 +40,61 @@ export const useGameEngine = () => {
         });
       }
     },
+
     mouseUp: () => {
       if (state.currentState === "PLAYING") {
         dispatch({ type: Actions.ClearPreviewCells });
       }
     },
-    handleCellClick: (cell: Cell, forceFlagMode = false) => {
-      if (state.currentState !== "PLAYING" && state.currentState !== "IDLE")
-        return;
 
-      const prevPlacedFlags = state.board.flat(1).filter((c) => c.isFlagged);
+    handleCellClick: (cell: Cell, forceFlagMode = false) => {
+      if (state.currentState === "WON" || state.currentState === "LOST") return;
+
       const result = resolveClick(state, cell, forceFlagMode);
 
-      if (result.status === "FIRST_CLICK" || result.status === "FIRST_FLAG") {
+      if (state.currentState === "IDLE") {
         dispatch({ type: Actions.Start });
       }
 
-      if (result.status === "FIRST_NON_FLAG" || result.status === "NON_FLAG") {
-        if (!cell.isRevealed) playSound("wrong_move");
+      if (result.invalidFlagAttempt) {
+        playSound("wrong_move");
       }
 
-      if (forceFlagMode || state.isFlagMode) {
-        const currentPlacedFlags = result.board
-          .flat(1)
-          .filter((c) => c.isFlagged);
+      if (result.placedFlag) playSound("place_flag");
+      if (result.removedFlag) playSound("remove_flag");
+      if (result.revealed) playOpenSound();
 
-        if (currentPlacedFlags.length > prevPlacedFlags.length)
-          playSound("place_flag");
-        else if (currentPlacedFlags < prevPlacedFlags) playSound("remove_flag");
-      } else {
-        playOpenSound();
-      }
-      if (result.status === "LOST") {
-        dispatch({ type: Actions.Lost });
-        playSound("explosion");
-        playSound("lose");
+      if (result.hitMine) {
+        const hasLifeMode = state.modes.includes(Modes.Life);
+
+        if (hasLifeMode && state.life > 1) {
+          dispatch({ type: Actions.Damage });
+          playSound("explosion");
+        } else {
+          const board = revealAllMines(result.board);
+
+          dispatch({ type: Actions.Lost });
+          dispatch({ type: Actions.Damage });
+
+          playSound("explosion");
+          playSound("lose");
+
+          dispatch({
+            type: Actions.UpdateBoard,
+            payload: { board },
+          });
+
+          return;
+        }
       }
 
-      if (result.status === "WON") {
+      const { won } = evaluateGame(result.board);
+
+      let finalBoard = result.board;
+
+      if (won) {
+        finalBoard = revealAllMines(result.board);
+
         dispatch({ type: Actions.Won });
         playSound("win");
         playSound("win_voices");
@@ -76,7 +102,7 @@ export const useGameEngine = () => {
 
       dispatch({
         type: Actions.UpdateBoard,
-        payload: { board: result.board },
+        payload: { board: finalBoard },
       });
     },
   };
@@ -88,24 +114,11 @@ export const useGameEngine = () => {
   };
 };
 
-function evaluateGame(board: Board) {
-  let hiddenNonMine = 0;
-  let mineRevealed = false;
-
-  for (const row of board) {
-    for (const cell of row) {
-      if (!cell.isRevealed && !cell.isMine) hiddenNonMine++;
-      if (cell.isRevealed && cell.isMine) mineRevealed = true;
-    }
-  }
-
-  return {
-    won: hiddenNonMine === 0,
-    lost: mineRevealed,
-  };
-}
-
-function resolveClick(state: GameState, cell: Cell, forceFlagMode: boolean) {
+function resolveClick(
+  state: GameState,
+  cell: Cell,
+  forceFlagMode: boolean,
+): ActionResult {
   if (state.currentState === "IDLE") {
     return resolveFirstClick(state, cell, forceFlagMode);
   }
@@ -114,30 +127,14 @@ function resolveClick(state: GameState, cell: Cell, forceFlagMode: boolean) {
     return resolvePlayingClick(state, cell, forceFlagMode);
   }
 
-  return {
-    board: state.board,
-    status: state.currentState,
-  };
-}
-
-function toggleFlag(board: Board, coord: Coord, minesCount: number): Board {
-  const newBoard = structuredClone(board);
-  const cell = newBoard[coord.row]?.[coord.col];
-
-  if (!cell || cell.isRevealed) return newBoard;
-  if (!cell.isFlagged && minesCount - getFlaggedCount(newBoard) <= 0)
-    return newBoard;
-
-  cell.isFlagged = !cell.isFlagged;
-
-  return newBoard;
+  return { board: state.board };
 }
 
 function resolveFirstClick(
   state: GameState,
   cell: Cell,
   forceFlagMode: boolean,
-) {
+): ActionResult {
   const isDecisionMode = state.modes.includes(Modes.Decision);
   const isFlagMode = forceFlagMode || state.isFlagMode;
   const canPlaceFlag = !isDecisionMode && isFlagMode;
@@ -154,7 +151,7 @@ function resolveFirstClick(
   if (isFlagMode) {
     return {
       board,
-      status: canPlaceFlag ? "FIRST_FLAG" : "FIRST_NON_FLAG",
+      placedFlag: canPlaceFlag,
     };
   }
 
@@ -163,11 +160,10 @@ function resolveFirstClick(
     coords: [cell.coord],
   });
 
-  const { won, lost } = evaluateGame(revealedBoard);
-
   return {
     board: revealedBoard,
-    status: lost ? "LOST" : won ? "WON" : "FIRST_CLICK",
+    revealed: true,
+    hitMine: cell.isMine,
   };
 }
 
@@ -175,52 +171,85 @@ function resolvePlayingClick(
   state: GameState,
   cell: Cell,
   forceFlagMode: boolean,
-) {
+): ActionResult {
   let board = state.board;
 
   const isDecisionMode = state.modes.includes(Modes.Decision);
   const isFlagMode = forceFlagMode || state.isFlagMode;
 
   if (isFlagMode) {
-    if (!isDecisionMode) {
-      board = toggleFlag(board, cell.coord, state.settings.mines);
-    } else {
+    if (isDecisionMode) {
       return {
         board,
-        status: "NON_FLAG",
+        invalidFlagAttempt: true,
       };
     }
-  } else {
-    if (!cell.isRevealed) {
-      board = floodRevealCells({
-        board,
-        coords: [cell.coord],
-      });
-    } else {
-      board = chordReveal(cell, board);
-    }
+
+    const before = getFlaggedCount(board);
+    board = toggleFlag(board, cell.coord, state.settings.mines);
+    const after = getFlaggedCount(board);
+
+    return {
+      board,
+      placedFlag: after > before,
+      removedFlag: after < before,
+    };
   }
 
-  const { won, lost } = evaluateGame(board);
-  if (lost) board = revealAllMines(board);
+  if (!cell.isRevealed) {
+    board = floodRevealCells({
+      board,
+      coords: [cell.coord],
+    });
+
+    return {
+      board,
+      revealed: true,
+      hitMine: cell.isMine,
+    };
+  }
+
+  board = chordReveal(cell, board);
 
   return {
     board,
-    status: lost ? "LOST" : won ? "WON" : "PLAYING",
+    revealed: true,
+  };
+}
+function evaluateGame(board: Board) {
+  let hiddenNonMine = 0;
+
+  for (const row of board) {
+    for (const cell of row) {
+      if (!cell.isRevealed && !cell.isMine) hiddenNonMine++;
+    }
+  }
+
+  return {
+    won: hiddenNonMine === 0,
   };
 }
 
+function toggleFlag(board: Board, coord: Coord, minesCount: number): Board {
+  const newBoard = structuredClone(board);
+  const cell = newBoard[coord.row]?.[coord.col];
+
+  if (!cell || cell.isRevealed) return newBoard;
+  if (!cell.isFlagged && minesCount - getFlaggedCount(newBoard) <= 0)
+    return newBoard;
+
+  cell.isFlagged = !cell.isFlagged;
+
+  return newBoard;
+}
+
 function handlePreviewCells(cell: Cell, board: Board) {
-  if (!cell.isRevealed || cell.neighborMines === 0)
-    return new Set() as Set<string>;
+  if (!cell.isRevealed || cell.neighborMines === 0) return new Set<string>();
 
   const neighbors = getAroundCell({ coord: cell.coord, board });
   const hidden = neighbors.filter((c) => !c.isRevealed && !c.isFlagged);
-  const newPreview = new Set(
-    hidden.map((c) => `${c.coord.row}-${c.coord.col}`),
-  );
 
-  return new Set(newPreview);
+  return new Set(hidden.map((c) => `${c.coord.row}-${c.coord.col}`));
 }
 
 function chordReveal(cell: Cell, board: Board): Board {
@@ -233,14 +262,13 @@ function chordReveal(cell: Cell, board: Board): Board {
     const hidden = neighbors.filter((c) => !c.isRevealed && !c.isFlagged);
 
     if (flagged.length === cell.neighborMines) {
-      const coordsToReveal = hidden.map((neighbor): Coord => neighbor.coord);
-      const updatedBoard = floodRevealCells({
+      const coordsToReveal = hidden.map((n): Coord => n.coord);
+
+      return floodRevealCells({
         board,
         coords: coordsToReveal,
         allowMultipleTriggered: true,
       });
-
-      return updatedBoard;
     }
   }
 

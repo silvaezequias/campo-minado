@@ -2,6 +2,7 @@ import {
   ChangeDifficultyAction,
   ChangeGameMode,
   ClearPreviewCellsAction,
+  DamageAction,
   LostAction,
   ResetAction,
   SetFlagMode,
@@ -37,7 +38,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return ChangeDifficultyAction(state, action);
     case Actions.ChangeGameMode:
       return ChangeGameMode(state, action);
-
+    case Actions.Damage:
+      return DamageAction(state);
     default:
       return state;
   }

@@ -6,6 +6,7 @@ const defaultDifficulty: Difficulties = "easy";
 const defaultSettings = DIFFICULTIES[defaultDifficulty];
 
 export const initialState: GameState = {
+  life: 1,
   time: 0,
   currentState: "START",
   isFlagMode: false,

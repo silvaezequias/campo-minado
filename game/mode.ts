@@ -79,7 +79,7 @@ export const MODES: ModeProps[] = [
     longDescription:
       "Você tem uma segunda chance. Ao clicar em uma bomba, não perde imediatamente. Ideal para partidas mais relaxadas ou para aprender o jogo.",
     icon: Heart,
-    enabled: false,
+    enabled: true,
     group: ModeGroup.Modifier,
   },
   {

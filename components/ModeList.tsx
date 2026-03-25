@@ -62,31 +62,41 @@ const Trigger = ({
   open: boolean;
   onToggle: () => void;
 }) => {
+  const MAX_VISIBLE = 3;
+
+  const visibleModes = activeModes.slice(0, MAX_VISIBLE);
+  const hiddenCount = activeModes.length - MAX_VISIBLE;
+
   return (
     <Button
       onClick={onToggle}
       variant="ghost"
-      className="w-full justify-center py-3 bg-neutral-800/60 border-zinc-800/60"
+      className="w-full justify-center py-3.5 bg-neutral-800/60 border-zinc-800/60"
+      title={
+        activeModes.length
+          ? `Modos ativos: ${activeModes.map((m) => m.label).join(", ")}`
+          : "Selecionar modos de jogo"
+      }
     >
-      <span className="tracking-widest uppercase text-sm flex gap-1 text-amber-300 items-center">
-        <span className="hidden md:inline-block">MODOS:</span>
-        {activeModes?.map((current, index) => {
-          const SelectedIcon = current.icon;
-          return (
-            <div key={current.id} className="flex items-center gap-1">
-              {SelectedIcon && <SelectedIcon className="size-5" />}
+      <span className="tracking-widest uppercase text-sm flex gap-4 items-center">
+        <span className="text-zinc-400 text-xs">modos</span>
 
-              {index < activeModes.length - 1 && (
-                <span className="font-medium opacity-50">•</span>
-              )}
-            </div>
-          );
-        })}
+        <div className="flex gap-2 items-center justify-center">
+          {visibleModes.map((mode) => {
+            const Icon = mode.icon;
+            return Icon ? (
+              <Icon key={mode.id} className="size-5 text-amber-300" />
+            ) : null;
+          })}
+
+          {hiddenCount > 0 && (
+            <span className="text-xs text-zinc-400">+{hiddenCount}</span>
+          )}
+        </div>
       </span>
     </Button>
   );
 };
-
 const List = ({
   options,
   modes,

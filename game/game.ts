@@ -26,12 +26,14 @@ export enum Actions {
   ClearPreviewCells = "CLEAR_PREVIEW_CELLS",
   ChangeDifficulty = "CHANGE_DIFFICULTY",
   ChangeGameMode = "CHANGE_GAME_MODE",
+  Damage = "DAMAGE",
 }
 
 export type GameAction =
   | { type: Actions.Won }
   | { type: Actions.Lost }
   | { type: Actions.Start }
+  | { type: Actions.Damage }
   | { type: Actions.ClearPreviewCells }
   | { type: Actions.SetTime; payload: { time: number } }
   | { type: Actions.UpdateBoard; payload: { board: Board } }
@@ -59,6 +61,7 @@ export type GameState = {
   isFlagMode: boolean;
   board: Board;
   modes: Modes[];
+  life: number;
 };
 
 export type Coord = {
