@@ -25,9 +25,9 @@ export const ModeInfoModal = ({
       <div className="relative w-[90%] max-w-md bg-neutral-900 border border-zinc-800 rounded-2xl p-5 flex flex-col gap-4 shadow-2xl ">
         <ModalHeader onClick={onClose} title={"Modo base"} />
         <Mode mode={baseMode!} />
-        <hr className="border-zinc-800" />
         {!!modifiers.length && (
           <>
+            <hr className="border-zinc-800" />
             <ModalHeader
               onClick={onClose}
               hideCloseButton={true}
