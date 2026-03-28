@@ -1,4 +1,4 @@
-import { useReducer } from "react";
+import { useReducer, useState } from "react";
 import { gameReducer } from "./reducer";
 import { initialState } from "./initialState";
 import { Actions, Board, Cell, Coord, GameState } from "./game";
@@ -25,6 +25,7 @@ type ActionResult = {
 
 export const useGameEngine = () => {
   const [state, dispatch] = useReducer(gameReducer, initialState);
+  const [isBoardSuffling, setIsBoardSuffling] = useState(false);
 
   const { playSound } = useAudio();
   const { playOpenSound } = useAudioHelpers();
@@ -50,9 +51,35 @@ export const useGameEngine = () => {
     handleCellClick: (cell: Cell, forceFlagMode = false) => {
       if (state.currentState === "WON" || state.currentState === "LOST") return;
 
-      const result = resolveClick(state, cell, forceFlagMode);
+      const result = resolveClick(state, cell, forceFlagMode, state.board);
 
-      if (state.currentState === "IDLE") {
+      if (!cell.isRevealed) {
+        const triggerChaos =
+          result.revealed &&
+          state.modes.includes(Modes.Chaos) &&
+          shouldTriggerChaos(state);
+
+        if (result.revealed || result.placedFlag || result.removedFlag) {
+          dispatch({ type: Actions.IncrementChaos });
+        }
+
+        if (triggerChaos) {
+          setIsBoardSuffling(true);
+
+          setTimeout(() => {
+            result.board = applyChaos(result.board);
+            setIsBoardSuffling(false);
+
+            dispatch({
+              type: Actions.UpdateBoard,
+              payload: { board: result.board },
+            });
+          }, 1500);
+
+          return;
+        }
+      }
+      if (state.currentState === "IDLE" && !result.invalidFlagAttempt) {
         dispatch({ type: Actions.Start });
       }
 
@@ -111,6 +138,7 @@ export const useGameEngine = () => {
     state,
     dispatch,
     cellEvents,
+    isBoardSuffling,
   };
 };
 
@@ -118,9 +146,10 @@ function resolveClick(
   state: GameState,
   cell: Cell,
   forceFlagMode: boolean,
+  oldBoard: Board,
 ): ActionResult {
   if (state.currentState === "IDLE") {
-    return resolveFirstClick(state, cell, forceFlagMode);
+    return resolveFirstClick(state, cell, forceFlagMode, oldBoard);
   }
 
   if (state.currentState === "PLAYING") {
@@ -134,10 +163,19 @@ function resolveFirstClick(
   state: GameState,
   cell: Cell,
   forceFlagMode: boolean,
+  oldBoard: Board,
 ): ActionResult {
-  const isDecisionMode = state.modes.includes(Modes.Decision);
   const isFlagMode = forceFlagMode || state.isFlagMode;
-  const canPlaceFlag = !isDecisionMode && isFlagMode;
+  const canPlaceFlag = state.flagsEnabled && isFlagMode;
+
+  if (isFlagMode) {
+    if (!state.flagsEnabled) {
+      return {
+        board: oldBoard,
+        invalidFlagAttempt: true,
+      };
+    }
+  }
 
   const board = generateBoard({
     enableBombs: true,
@@ -155,10 +193,20 @@ function resolveFirstClick(
     };
   }
 
-  const revealedBoard = floodRevealCells({
-    board,
-    coords: [cell.coord],
-  });
+  const isChaosMode = state.modes.includes(Modes.Chaos);
+
+  let revealedBoard: Board;
+
+  if (isChaosMode) {
+    const newBoard = structuredClone(board);
+    newBoard[cell.coord.row][cell.coord.col].isRevealed = true;
+    revealedBoard = newBoard;
+  } else {
+    revealedBoard = floodRevealCells({
+      board,
+      coords: [cell.coord],
+    });
+  }
 
   return {
     board: revealedBoard,
@@ -174,11 +222,10 @@ function resolvePlayingClick(
 ): ActionResult {
   let board = state.board;
 
-  const isDecisionMode = state.modes.includes(Modes.Decision);
   const isFlagMode = forceFlagMode || state.isFlagMode;
 
   if (isFlagMode) {
-    if (isDecisionMode) {
+    if (!state.flagsEnabled) {
       return {
         board,
         invalidFlagAttempt: true,
@@ -197,15 +244,34 @@ function resolvePlayingClick(
   }
 
   if (!cell.isRevealed) {
-    board = floodRevealCells({
-      board,
-      coords: [cell.coord],
-    });
+    const wasMine = cell.isMine;
 
+    const isChaosMode = state.modes.includes(Modes.Chaos);
+
+    if (!cell.isRevealed) {
+      const wasMine = cell.isMine;
+
+      if (isChaosMode) {
+        const newBoard = structuredClone(board);
+        newBoard[cell.coord.row][cell.coord.col].isRevealed = true;
+        board = newBoard;
+      } else {
+        board = floodRevealCells({
+          board,
+          coords: [cell.coord],
+        });
+      }
+
+      return {
+        board,
+        revealed: true,
+        hitMine: wasMine,
+      };
+    }
     return {
       board,
       revealed: true,
-      hitMine: cell.isMine,
+      hitMine: wasMine,
     };
   }
 
@@ -216,6 +282,7 @@ function resolvePlayingClick(
     revealed: true,
   };
 }
+
 function evaluateGame(board: Board) {
   let hiddenNonMine = 0;
 
@@ -273,4 +340,146 @@ function chordReveal(cell: Cell, board: Board): Board {
   }
 
   return board;
+}
+
+function applyChaos(board: Board): Board {
+  let newBoard = structuredClone(board);
+
+  let revealedCount = 0;
+
+  for (const row of newBoard) {
+    for (const cell of row) {
+      if (cell.isRevealed) revealedCount++;
+      cell.isRevealed = false;
+    }
+  }
+
+  const revealedCells: Cell[] = [];
+  const hiddenCells: Cell[] = [];
+
+  let minesToPlace = 0;
+
+  for (const row of newBoard) {
+    for (const cell of row) {
+      if (cell.isMine) minesToPlace++;
+      hiddenCells.push(cell);
+      cell.isMine = false;
+    }
+  }
+
+  placeMinesWithConstraints(newBoard, revealedCells, hiddenCells, minesToPlace);
+
+  newBoard = recalculateBoardNumbers(newBoard);
+
+  newBoard = revealRandomSafeCells(newBoard, revealedCount);
+
+  return newBoard;
+}
+
+function placeMinesWithConstraints(
+  board: Board,
+  revealedCells: Cell[],
+  hiddenCells: Cell[],
+  minesToPlace: number,
+) {
+  const shuffled = shuffleArray(hiddenCells);
+
+  for (const cell of shuffled) {
+    if (minesToPlace <= 0) break;
+
+    cell.isMine = true;
+
+    if (!isValidBoard(board, revealedCells)) {
+      cell.isMine = false;
+    } else {
+      minesToPlace--;
+    }
+  }
+
+  if (minesToPlace > 0) {
+    const remaining = shuffleArray(hiddenCells);
+
+    for (const cell of remaining) {
+      if (minesToPlace <= 0) break;
+
+      if (!cell.isMine) {
+        cell.isMine = true;
+        minesToPlace--;
+      }
+    }
+  }
+}
+export function shuffleArray<T>(array: T[]): T[] {
+  const result = [...array];
+
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+
+  return result;
+}
+
+function isValidBoard(board: Board, revealedCells: Cell[]) {
+  for (const cell of revealedCells) {
+    const neighbors = getAroundCell({ coord: cell.coord, board });
+
+    const mineCount = neighbors.filter((c) => c.isMine).length;
+
+    if (mineCount !== cell.neighborMines) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function recalculateBoardNumbers(board: Board): Board {
+  const newBoard = structuredClone(board);
+
+  for (const row of newBoard) {
+    for (const cell of row) {
+      if (cell.isMine) continue;
+
+      const neighbors = getAroundCell({ coord: cell.coord, board: newBoard });
+      cell.neighborMines = neighbors.filter((c) => c.isMine).length;
+    }
+  }
+
+  return newBoard;
+}
+
+function revealRandomSafeCells(board: Board, count: number): Board {
+  const newBoard = structuredClone(board);
+
+  const safeCells = getSafeCells(newBoard);
+  const shuffled = shuffleArray(safeCells);
+
+  const selected = shuffled.slice(0, count);
+
+  for (const cell of selected) {
+    newBoard[cell.coord.row][cell.coord.col].isRevealed = true;
+  }
+
+  return newBoard;
+}
+
+function getSafeCells(board: Board): Cell[] {
+  const safe: Cell[] = [];
+
+  for (const row of board) {
+    for (const cell of row) {
+      if (!cell.isMine && cell.neighborMines > 0) {
+        safe.push(cell);
+      }
+    }
+  }
+
+  return safe;
+}
+
+function shouldTriggerChaos(state: GameState) {
+  const nextClicks = state.chaos.chaosClicks + 1;
+  return nextClicks >= state.chaos.chaosThreshold;
 }

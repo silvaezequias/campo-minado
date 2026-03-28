@@ -26,6 +26,7 @@ export enum Actions {
   ClearPreviewCells = "CLEAR_PREVIEW_CELLS",
   ChangeDifficulty = "CHANGE_DIFFICULTY",
   ChangeGameMode = "CHANGE_GAME_MODE",
+  IncrementChaos = "INCREMENT_CAOS",
   Damage = "DAMAGE",
 }
 
@@ -35,6 +36,7 @@ export type GameAction =
   | { type: Actions.Start }
   | { type: Actions.Damage }
   | { type: Actions.ClearPreviewCells }
+  | { type: Actions.IncrementChaos }
   | { type: Actions.SetTime; payload: { time: number } }
   | { type: Actions.UpdateBoard; payload: { board: Board } }
   | { type: Actions.Reset; payload: { settings: Settings } }
@@ -62,6 +64,12 @@ export type GameState = {
   board: Board;
   modes: Modes[];
   life: number;
+  flagsEnabled: boolean;
+  chaos: {
+    chaosClicks: number;
+    shouldTriggerChaos: boolean;
+    chaosThreshold: number;
+  };
 };
 
 export type Coord = {
@@ -76,6 +84,7 @@ export type Cell = {
   isFlagged: boolean;
   neighborMines: number;
   isTriggered?: boolean;
+  id: string;
 };
 
 export type Board = Cell[][];

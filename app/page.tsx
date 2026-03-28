@@ -66,8 +66,8 @@ const GameControls: React.FC<SubComponentProps & { showHotkeys: boolean }> = ({
   showHotkeys,
 }) => {
   const { state, dispatch } = game;
-  const { currentState, isFlagMode, settings, difficulty } = state;
-  const isDecisionMode = state.modes.includes(Modes.Decision);
+  const { currentState, isFlagMode, settings, difficulty, flagsEnabled } =
+    state;
 
   const nextDifficulty: Record<Difficulties, Difficulties> = {
     easy: "medium",
@@ -138,7 +138,7 @@ const GameControls: React.FC<SubComponentProps & { showHotkeys: boolean }> = ({
           active={isFlagMode}
           icon={Flag}
           hotkey="f"
-          disabled={isDecisionMode}
+          disabled={!flagsEnabled}
           showHotkeys={showHotkeys}
           className="w-full"
           onClick={() =>
@@ -197,9 +197,8 @@ const ControlButton = ({
 export default function Minesweeper() {
   const game = useGameEngine();
   const { state, dispatch } = game;
-  const { settings, currentState, isFlagMode, time, modes } = state;
-
-  const isDecisionMode = modes.includes(Modes.Decision);
+  const { settings, currentState, isFlagMode, time, modes, flagsEnabled } =
+    state;
 
   const gameSettings = useGameSettings(game);
   const { showHotkeys } = gameSettings;
@@ -224,11 +223,11 @@ export default function Minesweeper() {
       if (keyMap[key] !== undefined) {
         dispatch({
           type: Actions.SetFlagMode,
-          payload: { isFlagMode: !isDecisionMode ? keyMap[key] : false },
+          payload: { isFlagMode: flagsEnabled ? keyMap[key] : false },
         });
       }
     },
-    [currentState, dispatch, settings, isFlagMode, isDecisionMode],
+    [currentState, dispatch, settings, isFlagMode, flagsEnabled],
   );
 
   const handleChangeMode = (mode: Modes) => {

@@ -1,6 +1,11 @@
 import { Action, Actions, Settings } from "./game";
 import { Modes } from "./mode";
-import { DIFFICULTIES, generateBoard, getCellSize } from "./util";
+import {
+  DIFFICULTIES,
+  generateBoard,
+  getCellSize,
+  getRandomChaosThreshold,
+} from "./util";
 
 function getInitialLife(settings: Settings, modes: Modes[]) {
   const hasLifeMode = modes.includes(Modes.Life);
@@ -32,8 +37,17 @@ export const ResetAction: Action<Actions.Reset> = (state, action) => {
     settings: settings,
     currentState: "IDLE",
     minesLeft: settings.mines,
+    flagsEnabled: !(
+      state.modes.includes(Modes.Chaos) || state.modes.includes(Modes.Decision)
+    ),
     board: generateBoard({ enableBombs: false, settings: settings }),
     cellSize: getCellSize(settings.columns),
+    chaos: {
+      chaosClicks: 0,
+      chaosThreshold: getRandomChaosThreshold(),
+      shouldTriggerChaos: true,
+      isShuffling: false,
+    },
   };
 };
 
@@ -144,5 +158,30 @@ export const DamageAction: Action<Actions.Damage> = (state) => {
   return {
     ...state,
     life: Math.max(0, state.life - 1),
+  };
+};
+
+export const IncrementChaosAction: Action<Actions.IncrementChaos> = (state) => {
+  const nextClicks = state.chaos.chaosClicks + 1;
+
+  if (nextClicks >= state.chaos.chaosThreshold) {
+    return {
+      ...state,
+      chaos: {
+        ...state.chaos,
+        chaosClicks: 0,
+        chaosThreshold: getRandomChaosThreshold(),
+        shouldTriggerChaos: true,
+      },
+    };
+  }
+
+  return {
+    ...state,
+    chaos: {
+      ...state.chaos,
+      chaosClicks: nextClicks,
+      shouldTriggerChaos: false,
+    },
   };
 };

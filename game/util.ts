@@ -24,6 +24,10 @@ type GenerateBoardProps = {
   settings: Settings;
 };
 
+export function getRandomChaosThreshold() {
+  return Math.floor(Math.random() * 4) + 2;
+}
+
 export function getFlaggedCount(board: Board) {
   const flagged = board.flat(1).filter((cell) => cell.isFlagged);
   return flagged.length;
@@ -46,6 +50,7 @@ export function generateBoard({
         isRevealed: false,
         isFlagged: safeCellIsCurrentCell && !!safeCellCoord?.flagged,
         neighborMines: 0,
+        id: crypto.randomUUID(),
       } as Cell;
     });
   });

@@ -2,8 +2,9 @@
 import { Engine } from "@/game/useGameEngine";
 import { Button, ButtonSize, ButtonVariant } from "./Button";
 import { Bomb, Crosshair, Flag, FlagOff, Goal } from "lucide-react";
-import { MouseEventHandler, useEffect, useState } from "react";
+import { MouseEventHandler, useEffect, useMemo, useState } from "react";
 import { Cell, GamePhase } from "@/game/game";
+import { motion } from "framer-motion";
 import { Modes } from "@/game/mode";
 
 type DisplayModes = Modes[];
@@ -13,14 +14,29 @@ type BoardProps = {
 };
 
 export const Board = ({ game }: BoardProps) => {
-  const { state, cellEvents } = game;
+  const { state, cellEvents, isBoardSuffling } = game;
   const { settings, board, cellSize, currentState, previewCells, modes } =
     state;
   const { columns, rows } = settings;
 
+  const shuffleMap = useMemo(() => {
+    if (!isBoardSuffling) return {};
+
+    const map: Record<string, number> = {};
+
+    board.forEach((row) => {
+      row.forEach((cell) => {
+        map[cell.id] =
+          Math.random() * 400 + (cell.coord.row + cell.coord.col) * 60;
+      });
+    });
+
+    return map;
+  }, [isBoardSuffling, board]);
+
   return (
     <div
-      className={`bg-neutral-800/60 border-zinc-800/60 border rounded-xl p-1 sm:p-5 py-2 gap-0.5 sm:gap-1 grid overflow-hidden`}
+      className="bg-neutral-800/60 border-zinc-800/60 border rounded-xl p-1 sm:p-5 py-2 gap-0.5 sm:gap-1 grid overflow-hidden perspective-[1000px]"
       onContextMenu={(event) => event.preventDefault()}
       style={{
         gridTemplateColumns: `repeat(${columns}, 1fr)`,
@@ -28,24 +44,23 @@ export const Board = ({ game }: BoardProps) => {
       }}
     >
       {board.map((row) => {
-        return row.map((cell) => {
-          return (
-            <BoardCell
-              modes={modes}
-              cell={cell}
-              size={cellSize}
-              key={`x${cell.coord.col}y${cell.coord.row}`}
-              currentState={currentState}
-              isPreview={previewCells.has(
-                `${cell.coord.row}-${cell.coord.col}`,
-              )}
-              onMouseUp={() => cellEvents.mouseUp()}
-              onMouseDown={() => cellEvents.mouseDown(cell)}
-              onClick={() => cellEvents.handleCellClick(cell)}
-              onContextMenu={() => cellEvents.handleCellClick(cell, true)}
-            />
-          );
-        });
+        return row.map((cell) => (
+          <BoardCell
+            modes={modes}
+            cell={cell}
+            size={cellSize}
+            flagsEnabled={state.flagsEnabled}
+            isBoardSuffling={isBoardSuffling}
+            shuffleDelay={shuffleMap[cell.id] || 0}
+            key={cell.id}
+            currentState={currentState}
+            isPreview={previewCells.has(`${cell.coord.row}-${cell.coord.col}`)}
+            onMouseUp={() => cellEvents.mouseUp()}
+            onMouseDown={() => cellEvents.mouseDown(cell)}
+            onClick={() => cellEvents.handleCellClick(cell)}
+            onContextMenu={() => cellEvents.handleCellClick(cell, true)}
+          />
+        ));
       })}
     </div>
   );
@@ -56,7 +71,10 @@ type BoardCellProps = {
   modes: DisplayModes;
   size: ButtonSize;
   isPreview: boolean;
+  isBoardSuffling: boolean;
+  shuffleDelay: number;
   currentState: GamePhase;
+  flagsEnabled: boolean;
   onClick: MouseEventHandler<HTMLButtonElement>;
   onContextMenu: MouseEventHandler<HTMLButtonElement>;
   onMouseDown: MouseEventHandler<HTMLButtonElement>;
@@ -69,6 +87,9 @@ const BoardCell = ({
   modes,
   isPreview,
   currentState,
+  isBoardSuffling,
+  shuffleDelay,
+  flagsEnabled,
   onClick,
   onContextMenu,
   onMouseDown,
@@ -80,14 +101,12 @@ const BoardCell = ({
   const baseIcon = getCellIcon({ cell, currentState });
 
   const variant =
-    isRightClicking && modes.includes(Modes.Decision) && !cell.isRevealed
+    isRightClicking && !flagsEnabled && !cell.isRevealed
       ? "danger"
       : baseVariant;
 
   const icon =
-    isRightClicking && modes.includes(Modes.Decision) && !cell.isRevealed
-      ? FlagOff
-      : baseIcon;
+    isRightClicking && !flagsEnabled && !cell.isRevealed ? FlagOff : baseIcon;
 
   const content =
     cell.isRevealed && !cell.isMine ? (
@@ -102,6 +121,7 @@ const BoardCell = ({
 
   const animation = cell.isMine && cell.isRevealed && "animate-pulse";
   const isClickable =
+    !isBoardSuffling &&
     (currentState === "PLAYING" || currentState === "IDLE") &&
     !cell.isFlagged &&
     !isPreview;
@@ -124,21 +144,45 @@ const BoardCell = ({
   }, []);
 
   return (
-    <Button
-      icon={icon}
-      aspect="square"
-      size={size}
-      fillIcon={fillIconColor}
-      className={`${fillIconColor} ${animation}`}
-      clickable={isClickable}
-      onClick={onClick}
-      onMouseUp={onMouseUp}
-      onMouseDown={handleMouseDown}
-      onContextMenu={onContextMenu}
-      variant={variant}
-    >
-      {content || ""}
-    </Button>
+    <motion.div layout className="aspect-square perspective-[1000px]">
+      <div
+        className={`relative w-full h-full transform-3d ${
+          isBoardSuffling ? "rotate-y-180" : ""
+        }`}
+        style={{
+          transitionProperty: "transform",
+          transitionDuration: "600ms",
+          transitionTimingFunction: "ease-in-out",
+          transitionDelay: `${shuffleDelay}ms`,
+        }}
+      >
+        {/* FRONT */}
+        <div className="absolute inset-0 backface-hidden">
+          <Button
+            icon={icon}
+            aspect="square"
+            size={size}
+            fillIcon={fillIconColor}
+            className={`${fillIconColor} ${animation} w-full`}
+            clickable={isClickable}
+            onClick={onClick}
+            onMouseUp={onMouseUp}
+            onMouseDown={handleMouseDown}
+            onContextMenu={onContextMenu}
+            variant={variant}
+          >
+            {content || ""}
+          </Button>
+        </div>
+
+        {/* BACK (durante shuffle) */}
+        <div className="absolute inset-0 rotate-y-180 backface-hidden">
+          <div className="w-full h-full bg-zinc-700 rounded-xl flex items-center justify-center">
+            {/* pode colocar um ícone ou deixar vazio */}
+          </div>
+        </div>
+      </div>
+    </motion.div>
   );
 };
 

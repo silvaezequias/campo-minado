@@ -173,9 +173,6 @@ const Toggle = ({
   );
 };
 
-//
-// 🔹 Slider
-//
 const Slider = ({
   value,
   onChange,
@@ -189,7 +186,7 @@ const Slider = ({
     <input
       type="range"
       min={0}
-      max={1}
+      max={0.1}
       step={0.01}
       value={value}
       disabled={disabled}

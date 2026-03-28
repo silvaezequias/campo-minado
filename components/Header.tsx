@@ -43,9 +43,8 @@ export const Header = ({
     handleChangeSettings,
   } = gameSettings;
 
-  const { modes, time, life, settings, currentState } = state;
+  const { modes, time, life, settings, currentState, flagsEnabled } = state;
 
-  const isDecisionMode = modes.includes(Modes.Decision);
   const leftFlags = settings.mines - getFlaggedCount(state.board);
   const totalBombs = settings.mines;
 
@@ -98,7 +97,7 @@ export const Header = ({
             time={time}
             life={life}
             modes={modes}
-            leftFlags={isDecisionMode ? 0 : leftFlags}
+            leftFlags={flagsEnabled ? leftFlags : 0}
             totalBombs={totalBombs}
             currentState={currentState}
             showTimer={showTimer}

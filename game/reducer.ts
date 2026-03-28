@@ -3,6 +3,7 @@ import {
   ChangeGameMode,
   ClearPreviewCellsAction,
   DamageAction,
+  IncrementChaosAction,
   LostAction,
   ResetAction,
   SetFlagMode,
@@ -40,6 +41,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return ChangeGameMode(state, action);
     case Actions.Damage:
       return DamageAction(state);
+    case Actions.IncrementChaos:
+      return IncrementChaosAction(state);
     default:
       return state;
   }

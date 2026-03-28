@@ -2,10 +2,10 @@ import {
   Brain,
   Timer,
   Heart,
-  Shuffle,
   Bomb,
   FlagOff,
   Dice5,
+  Combine,
 } from "lucide-react";
 import { JSX } from "react";
 
@@ -109,10 +109,10 @@ export const MODES: ModeProps[] = [
     label: "Caos",
     description: "Nada fica no lugar",
     longDescription:
-      "O tabuleiro não é estático. Bombas podem mudar de posição durante a partida, exigindo adaptação constante e quebrando padrões previsíveis.",
-    icon: Shuffle,
+      "O tabuleiro não é estático. Bombas podem mudar de posição durante a partida, exigindo adaptação constante e quebrando padrões previsíveis. ATENÇÃO: As Flags são desativadas nesse modo.",
+    icon: Combine,
     isHard: true,
-    enabled: false,
+    enabled: true,
     group: ModeGroup.Base,
   },
 ];
