@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
-import { Check, LockKeyhole } from "lucide-react";
+import { Check, Circle, LockKeyhole } from "lucide-react";
 import { Button } from "./Button";
-import { ModeProps, Modes } from "@/game/mode";
+import { ModeGroup, ModeProps, Modes } from "@/game/mode";
 import { Modal, ModalHeader } from "./Modal";
 
 type ModeListProps = {
@@ -38,7 +38,7 @@ export const ModeList = ({
           <div className="z-50 w-[90%] md:w-[50%] lg:w-[40%] xl:w-[20%] p-5 gap-3 bg-neutral-900 borde border-zinc-800 rounded-2xl flex flex-col">
             <ModalHeader
               onClick={() => setModeListOpen(false)}
-              title="Modos de Jogo"
+              title="Base de Jogo"
             />
             <List
               options={options}
@@ -46,6 +46,21 @@ export const ModeList = ({
               onSelect={(mode) => {
                 onChange(mode);
               }}
+              filter={(opt) => opt.group === ModeGroup.Base}
+            />
+            <ModalHeader
+              onClick={() => setModeListOpen(false)}
+              hideCloseButton={true}
+              title="Modificadores"
+            />
+            <List
+              options={options}
+              modes={modes}
+              multipleOptions={true}
+              onSelect={(mode) => {
+                onChange(mode);
+              }}
+              filter={(opt) => opt.group !== ModeGroup.Base}
             />
           </div>
         </Modal>
@@ -101,14 +116,20 @@ const List = ({
   options,
   modes,
   onSelect,
+  filter,
+  multipleOptions = false,
 }: {
-  options: ModeProps[];
   modes: Modes[];
+  options: ModeProps[];
+  multipleOptions?: boolean;
   onSelect: (mode: Modes) => void;
+  filter: (option: ModeProps) => boolean;
 }) => {
   options = options.sort((a, b) => {
     return Number(b.enabled) - Number(a.enabled);
   });
+
+  options = options.filter(filter);
 
   return (
     <div className="w-full flex flex-col gap-2">
@@ -116,6 +137,7 @@ const List = ({
         <Item
           key={option.id}
           option={option}
+          type={multipleOptions ? "checkbox" : "radio"}
           isSelected={modes.includes(option.id)}
           onClick={() => onSelect(option.id)}
         />
@@ -128,12 +150,16 @@ const Item = ({
   option,
   isSelected,
   onClick,
+  type,
 }: {
   option: ModeProps;
   isSelected: boolean;
+  type: "checkbox" | "radio";
   onClick: () => void;
 }) => {
   const Icon = option.icon;
+
+  const isRadioBox = type === "radio";
 
   return (
     <Button
@@ -160,12 +186,25 @@ const Item = ({
           {option.isHard && (
             <div className="text-red-500 text-xs tracking-widest">Difícil</div>
           )}
-          <div className="text-xs border rounded bg-zinc-900 border-zinc-300/10 p-1">
+          <div
+            className={`text-xs border bg-zinc-900 border-zinc-300/10 p-1 ${isRadioBox ? "rounded-full" : "rounded"}`}
+          >
             {option.enabled ? (
-              <Check
-                size="15"
-                className={isSelected ? "text-amber-300" : "text-zinc-900"}
-              />
+              isRadioBox ? (
+                <Circle
+                  size="15"
+                  className={
+                    isSelected
+                      ? "text-amber-300 fill-amber-300"
+                      : "text-zinc-900 fill-zinc-900"
+                  }
+                />
+              ) : (
+                <Check
+                  size="15"
+                  className={isSelected ? "text-amber-300" : "text-zinc-900"}
+                />
+              )
             ) : (
               <LockKeyhole size="15" className="text-red-400" />
             )}

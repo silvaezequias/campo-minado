@@ -4,16 +4,20 @@ import { Button } from "./Button";
 export const ModalHeader = ({
   title,
   onClick,
+  hideCloseButton,
 }: {
   title: string;
+  hideCloseButton?: boolean;
   onClick: () => void;
 }) => {
   return (
     <div className="text-amber-300 flex justify-between items-center px-2">
       <span className="font-medium text-2xl">{title}</span>
-      <Button onClick={onClick}>
-        <X />
-      </Button>
+      {!hideCloseButton && (
+        <Button onClick={onClick}>
+          <X />
+        </Button>
+      )}
     </div>
   );
 };
