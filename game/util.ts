@@ -25,7 +25,7 @@ type GenerateBoardProps = {
 };
 
 export function getRandomChaosThreshold() {
-  return Math.floor(Math.random() * 4) + 2;
+  return Math.floor(Math.random() * 10) + 2;
 }
 
 export function getFlaggedCount(board: Board) {
