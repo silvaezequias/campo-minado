@@ -275,11 +275,12 @@ function resolvePlayingClick(
     };
   }
 
-  board = chordReveal(cell, board);
+  const { board: newBoard, hitMine } = chordReveal(cell, board);
 
   return {
-    board,
+    board: newBoard,
     revealed: true,
+    hitMine,
   };
 }
 
@@ -319,8 +320,14 @@ function handlePreviewCells(cell: Cell, board: Board) {
   return new Set(hidden.map((c) => `${c.coord.row}-${c.coord.col}`));
 }
 
-function chordReveal(cell: Cell, board: Board): Board {
-  if (!cell || cell.isFlagged) return board;
+function chordReveal(
+  cell: Cell,
+  board: Board,
+): {
+  board: Board;
+  hitMine: boolean;
+} {
+  if (!cell || cell.isFlagged) return { board, hitMine: false };
 
   if (cell.isRevealed && cell.neighborMines > 0) {
     const neighbors = getAroundCell({ coord: cell.coord, board });
@@ -331,15 +338,22 @@ function chordReveal(cell: Cell, board: Board): Board {
     if (flagged.length === cell.neighborMines) {
       const coordsToReveal = hidden.map((n): Coord => n.coord);
 
-      return floodRevealCells({
+      const hitMine = hidden.some((c) => c.isMine);
+
+      const newBoard = floodRevealCells({
         board,
         coords: coordsToReveal,
         allowMultipleTriggered: true,
       });
+
+      return {
+        board: newBoard,
+        hitMine,
+      };
     }
   }
 
-  return board;
+  return { board, hitMine: false };
 }
 
 function applyChaos(board: Board): Board {
