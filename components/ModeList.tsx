@@ -167,11 +167,11 @@ const Item = ({
   const isRadioBox = type === "radio";
 
   const modeLabel = {
-    0: <div className="text-green-500 text-xs tracking-widest">Fácil</div>,
-    1: <div className="text-green-500 text-xs tracking-widest">Normal</div>,
-    2: <div className="text-yellow-500 text-xs tracking-widest">Médio</div>,
-    3: <div className="text-red-500 text-xs tracking-widest">Difícil</div>,
-    4: <div className="text-red-800 text-xs tracking-widest">Extremo</div>,
+    0: <div className="text-green-500 text-[10px] tracking-widest">Fácil</div>,
+    1: <div className="text-green-500 text-[10px] tracking-widest">Normal</div>,
+    2: <div className="text-yellow-500 text-[10px] tracking-widest">Médio</div>,
+    3: <div className="text-red-500 text-[10px] tracking-widest">Difícil</div>,
+    4: <div className="text-red-800 text-[10px] tracking-widest">Extremo</div>,
     5: (
       <div className="text-amber-300 text-xs tracking-widest">
         Personalizado

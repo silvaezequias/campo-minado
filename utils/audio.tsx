@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { Howl } from "howler";
 
 const musicList = [
   "/music/01.mp3",
@@ -31,9 +32,8 @@ type SoundKey = keyof typeof soundsList;
 
 class AudioManager {
   private musicList: string[];
-  private sounds = new Map<SoundKey, HTMLAudioElement>();
-  private music: HTMLAudioElement | null = null;
-
+  private sounds = new Map<SoundKey, Howl>();
+  private music: Howl | null = null;
   private shuffledList: number[] = [];
   private currentIndex = 0;
 
@@ -46,99 +46,105 @@ class AudioManager {
     this.musicList = musicList;
 
     Object.entries(soundsList).forEach(([key, src]) => {
-      const audio = new Audio(src);
-      audio.preload = "auto";
-      this.sounds.set(key as SoundKey, audio);
+      this.sounds.set(
+        key as SoundKey,
+        new Howl({
+          src: [src],
+          preload: true,
+          volume: this.soundsVolume,
+          html5: false, // Força Web Audio API -> Latência zero + Não pausa Spotify
+        }),
+      );
     });
   }
 
   private shuffle() {
     const array = [...Array(this.musicList.length).keys()];
-
     for (let i = array.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [array[i], array[j]] = [array[j], array[i]];
     }
-
     this.shuffledList = array;
     this.currentIndex = 0;
   }
 
   setSoundEnabled(value: boolean) {
     this.soundsEnabled = value;
+    // Se desativar sons, silencia os que estão tocando
+    this.sounds.forEach((sound) => sound.mute(!value));
   }
 
   setMusicEnabled(value: boolean) {
     this.musicEnabled = value;
     if (!value) this.stopMusic();
-    else this.playMusic();
+    else if (!this.music || !this.music.playing()) this.playMusic();
   }
 
   playMusic() {
     if (!this.musicEnabled) return;
 
     if (!this.music) {
-      if (this.shuffledList.length === 0) {
-        this.shuffle();
-      }
-
+      if (this.shuffledList.length === 0) this.shuffle();
       const index = this.shuffledList[this.currentIndex];
 
-      this.music = new Audio(this.musicList[index]);
-      this.music.volume = this.musicVolume;
-
-      this.music.onended = () => this.nextMusic();
+      this.music = new Howl({
+        src: [this.musicList[index]],
+        volume: this.musicVolume,
+        html5: true, // Streaming para arquivos longos
+        onend: () => this.nextMusic(),
+      });
     }
 
-    this.music.play().catch(() => {});
+    if (!this.music.playing()) {
+      this.music.play();
+    }
   }
 
   nextMusic() {
-    this.currentIndex++;
-
-    if (this.currentIndex >= this.shuffledList.length) {
-      this.shuffle();
+    if (this.music) {
+      this.music.stop();
+      this.music.unload(); // Limpa memória da música anterior
     }
 
+    this.currentIndex++;
+    if (this.currentIndex >= this.shuffledList.length) this.shuffle();
+
     const index = this.shuffledList[this.currentIndex];
+    this.music = new Howl({
+      src: [this.musicList[index]],
+      volume: this.musicVolume,
+      html5: true,
+      onend: () => this.nextMusic(),
+    });
 
-    this.music = new Audio(this.musicList[index]);
-    this.music.volume = this.musicVolume;
-
-    this.music.onended = () => this.nextMusic();
-
-    this.music.play().catch(() => {});
+    this.music.play();
   }
 
   stopMusic() {
-    if (this.music) {
-      this.music.pause();
-    }
+    if (this.music) this.music.pause();
   }
 
   playSound(key: SoundKey, rate = 1) {
     if (!this.soundsEnabled) return;
 
-    const base = this.sounds.get(key);
-    if (!base) return;
+    const sound = this.sounds.get(key);
+    if (!sound) return;
 
-    const audio = base.cloneNode() as HTMLAudioElement;
-    audio.volume = this.soundsVolume;
-    audio.playbackRate = rate;
-
-    audio.play().catch(() => {});
+    sound.rate(rate);
+    sound.volume(this.soundsVolume);
+    sound.play();
   }
 
   setSoundsVolume(volume: number) {
     this.soundsVolume = volume;
+    this.sounds.forEach((s) => s.volume(volume));
   }
 
   setMusicVolume(volume: number) {
     this.musicVolume = volume;
-    if (this.music) this.music.volume = volume;
+    if (this.music) this.music.volume(volume);
   }
 }
-
 let audioManager: AudioManager | null = null;
 
 function getAudioManager() {
