@@ -74,7 +74,7 @@ export const useGameEngine = () => {
               type: Actions.UpdateBoard,
               payload: { board: result.board },
             });
-          }, 1500);
+          }, 2000);
 
           return;
         }

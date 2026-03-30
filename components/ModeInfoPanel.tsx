@@ -51,8 +51,25 @@ export const ModeInfoModal = ({
 };
 
 function Mode({ mode }: { mode: ModeProps }) {
-  const { label, icon, longDescription, isHard } = mode;
+  const { label, icon, longDescription, difficulty } = mode;
   const Icon = icon!;
+
+  const modeLabel = {
+    0: <div className="text-green-500 text-xs tracking-widest">Modo Fácil</div>,
+    1: (
+      <div className="text-green-500 text-xs tracking-widest">Modo Normal</div>
+    ),
+    2: (
+      <div className="text-yellow-500 text-xs tracking-widest">Modo Médio</div>
+    ),
+    3: <div className="text-red-500 text-xs tracking-widest">Modo Difícil</div>,
+    4: <div className="text-red-800 text-xs tracking-widest">Modo Extremo</div>,
+    5: (
+      <div className="text-amber-300 text-xs tracking-widest">
+        Modo Personalizado
+      </div>
+    ),
+  };
 
   return (
     <div className="px-2">
@@ -72,12 +89,9 @@ function Mode({ mode }: { mode: ModeProps }) {
       </div>
 
       <p className="text-sm text-zinc-300 leading-relaxed">{longDescription}</p>
-
-      {isHard && (
-        <span className="text-xs text-red-400 uppercase tracking-widest">
-          Modo Difícil
-        </span>
-      )}
+      <span className="uppercase">
+        {modeLabel[difficulty as keyof typeof modeLabel]}
+      </span>
     </div>
   );
 }

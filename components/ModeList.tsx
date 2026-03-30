@@ -125,9 +125,14 @@ const List = ({
   onSelect: (mode: Modes) => void;
   filter: (option: ModeProps) => boolean;
 }) => {
-  options = options.sort((a, b) => {
-    return Number(b.enabled) - Number(a.enabled);
-  });
+  options = [...options]
+    .sort((a, b) => {
+      if (a.difficulty !== b.difficulty) return a.difficulty - b.difficulty;
+      return a.label.localeCompare(b.label);
+    })
+    .sort((a, b) => {
+      return Number(b.enabled) - Number(a.enabled);
+    });
 
   options = options.filter(filter);
 
@@ -161,6 +166,19 @@ const Item = ({
 
   const isRadioBox = type === "radio";
 
+  const modeLabel = {
+    0: <div className="text-green-500 text-xs tracking-widest">Fácil</div>,
+    1: <div className="text-green-500 text-xs tracking-widest">Normal</div>,
+    2: <div className="text-yellow-500 text-xs tracking-widest">Médio</div>,
+    3: <div className="text-red-500 text-xs tracking-widest">Difícil</div>,
+    4: <div className="text-red-800 text-xs tracking-widest">Extremo</div>,
+    5: (
+      <div className="text-amber-300 text-xs tracking-widest">
+        Personalizado
+      </div>
+    ),
+  };
+
   return (
     <Button
       onClick={onClick}
@@ -174,7 +192,7 @@ const Item = ({
 
           <div className="flex flex-col items-start">
             <span className="text-sm font-bold uppercase tracking-widest">
-              {option.label}
+              {option.label} {!option.enabled && "(Em breve)"}
             </span>
 
             <span className="text-xs font-normal text-start">
@@ -183,11 +201,9 @@ const Item = ({
           </div>
         </div>
         <div className="flex gap-2 items-center">
-          {option.isHard && (
-            <div className="text-red-500 text-xs tracking-widest">Difícil</div>
-          )}
+          {modeLabel[option.difficulty as keyof typeof modeLabel]}
           <div
-            className={`text-xs border bg-zinc-900 border-zinc-300/10 p-1 ${isRadioBox ? "rounded-full" : "rounded"}`}
+            className={`text-xs border bg-zinc-900 p-1 ${isRadioBox ? (isSelected ? "rounded-full border-amber-300" : "rounded-full border-zinc-300/10") : "rounded border-zinc-300/10"}`}
           >
             {option.enabled ? (
               isRadioBox ? (

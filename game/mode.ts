@@ -32,7 +32,7 @@ export type ModeProps = {
   description: string;
   longDescription: string;
   icon: JSX.ElementType;
-  isHard?: boolean;
+  difficulty: number;
   enabled: boolean;
   group: ModeGroup;
 };
@@ -49,8 +49,21 @@ export const MODES: ModeProps[] = [
     longDescription:
       "A experiência tradicional do campo minado. Use lógica e atenção para identificar bombas com base nos números exibidos. Ideal para quem quer jogar da forma original.",
     icon: Bomb,
+    difficulty: 1,
     enabled: true,
     group: ModeGroup.Base,
+  },
+
+  {
+    id: Modes.Life,
+    label: "Vida",
+    description: "Erre sem perder na hora",
+    longDescription:
+      "Você tem uma segunda chance. Ao clicar em uma bomba, não perde imediatamente. Ideal para partidas mais relaxadas ou para aprender o jogo.",
+    icon: Heart,
+    difficulty: 0,
+    enabled: true,
+    group: ModeGroup.Modifier,
   },
   {
     id: Modes.Points,
@@ -59,9 +72,11 @@ export const MODES: ModeProps[] = [
     longDescription:
       "Os números são substituídos por pontos visuais. A lógica continua a mesma, mas a leitura exige mais atenção e percepção visual.",
     icon: Dice5,
+    difficulty: 2,
     enabled: true,
     group: ModeGroup.Cognitive,
   },
+
   {
     id: Modes.Decision,
     label: "Decisão",
@@ -69,19 +84,11 @@ export const MODES: ModeProps[] = [
     longDescription:
       "Sem marcações ou bandeiras. Cada jogada é definitiva, exigindo mais confiança na sua leitura e aumentando o risco a cada escolha.",
     icon: FlagOff,
+    difficulty: 3,
     enabled: true,
     group: ModeGroup.Modifier,
   },
-  {
-    id: Modes.Life,
-    label: "Vida",
-    description: "Erre sem perder na hora",
-    longDescription:
-      "Você tem uma segunda chance. Ao clicar em uma bomba, não perde imediatamente. Ideal para partidas mais relaxadas ou para aprender o jogo.",
-    icon: Heart,
-    enabled: true,
-    group: ModeGroup.Modifier,
-  },
+
   {
     id: Modes.Memory,
     label: "Memória",
@@ -89,7 +96,7 @@ export const MODES: ModeProps[] = [
     longDescription:
       "Os números aparecem por um curto período e depois desaparecem. Você precisa memorizar o tabuleiro e usar lógica para continuar.",
     icon: Brain,
-    isHard: true,
+    difficulty: 3,
     enabled: true,
     group: ModeGroup.Base,
   },
@@ -100,7 +107,7 @@ export const MODES: ModeProps[] = [
     longDescription:
       "Você precisa resolver o tabuleiro contra o tempo. Decisões rápidas são essenciais, reduzindo o tempo para análise e aumentando a tensão.",
     icon: Timer,
-    isHard: true,
+    difficulty: 4,
     enabled: false,
     group: ModeGroup.Modifier,
   },
@@ -109,9 +116,9 @@ export const MODES: ModeProps[] = [
     label: "Caos",
     description: "Nada fica no lugar",
     longDescription:
-      "O tabuleiro não é estático. Bombas podem mudar de posição durante a partida, exigindo adaptação constante e quebrando padrões previsíveis. ATENÇÃO: As Flags são desativadas nesse modo.",
+      "O tabuleiro não é estático. Bombas podem mudar de posição durante a partida, exigindo adaptação constante e quebrando padrões previsíveis. Lembre-se que as bandeiras são desativadas nesse modo.",
     icon: Combine,
-    isHard: true,
+    difficulty: 4,
     enabled: true,
     group: ModeGroup.Base,
   },

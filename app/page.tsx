@@ -140,6 +140,7 @@ const GameControls: React.FC<SubComponentProps & { showHotkeys: boolean }> = ({
           hotkey="f"
           disabled={!flagsEnabled}
           showHotkeys={showHotkeys}
+          disabledText={<span className="text-xs">Desativado</span>}
           className="w-full"
           onClick={() =>
             dispatch({
@@ -172,6 +173,7 @@ const ControlButton = ({
   onClick,
   className,
   disabled,
+  disabledText,
 }: {
   active?: boolean;
   icon: LucideIcon;
@@ -180,6 +182,7 @@ const ControlButton = ({
   onClick: () => void;
   className?: string;
   disabled?: boolean;
+  disabledText?: React.ReactNode;
 }) => (
   <BaseButton
     variant={active ? "primary" : "default"}
@@ -190,6 +193,7 @@ const ControlButton = ({
     disabled={disabled}
     fillIcon={active ? "fill-zinc-950" : ""}
   >
+    {disabled && disabledText}
     {showHotkeys && <span className="hidden md:inline-block">({hotkey})</span>}
   </BaseButton>
 );
